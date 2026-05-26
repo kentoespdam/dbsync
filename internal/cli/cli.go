@@ -46,6 +46,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&dbPath, "db", "", "path to the SQLite database")
 	rootCmd.AddCommand(connCmd)
 	rootCmd.AddCommand(tablesCmd)
+	rootCmd.AddCommand(mappingCmd)
 }
 
 func getDB() (*storage.DB, error) {
