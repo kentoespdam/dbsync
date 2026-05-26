@@ -1,10 +1,8 @@
 {
   "mcpServers": {
     "gitnexus": {
-      "command": "npx",
+      "command": "gitnexus",
       "args": [
-        "-y",
-        "gitnexus@latest",
         "mcp"
       ],
       "env": {
@@ -17,35 +15,6 @@
         "-y",
         "@upstash/context7-mcp@latest"
       ]
-    },
-    "cloudflare": {
-      "type": "remote",
-      "url": "https://mcp.cloudflare.com/mcp",
-      "enabled": true,
-      "oauth": {}
-    },
-    "cloudflare-docs": {
-      "type": "remote",
-      "url": "https://docs.mcp.cloudflare.com/mcp",
-      "enabled": true
-    },
-    "cloudflare-bindings": {
-      "type": "remote",
-      "url": "https://bindings.mcp.cloudflare.com/mcp",
-      "enabled": true,
-      "oauth": {}
-    },
-    "cloudflare-builds": {
-      "type": "remote",
-      "url": "https://builds.mcp.cloudflare.com/mcp",
-      "enabled": true,
-      "oauth": {}
-    },
-    "cloudflare-observability": {
-      "type": "remote",
-      "url": "https://observability.mcp.cloudflare.com/mcp",
-      "enabled": true,
-      "oauth": {}
     }
   }
 }
