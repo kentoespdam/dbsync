@@ -1,0 +1,32 @@
+# Binaries
+/dbsync
+/dist/
+*.exe
+*.out
+*.test
+
+# Go build
+/vendor/
+
+# Local data
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+/logs/
+*.jsonl
+
+# Secrets
+.env
+.envrc
+salt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
