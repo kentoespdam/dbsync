@@ -76,12 +76,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		// Propagate to child models that need it
-		m.mainMenu.list.SetSize(msg.Width, msg.Height)
-		m.connList.table.SetWidth(msg.Width)
-		m.connList.table.SetHeight(msg.Height - 5) // leave room for help text
-		m.connPicker.list.SetSize(msg.Width, msg.Height)
-		m.tablePicker.list.SetSize(msg.Width, msg.Height)
+		// Propagate to child models that have been initialized.
+		// Lazy-created models pick up size on creation via m.width/m.height.
+		if m.mainMenu.inited {
+			m.mainMenu.list.SetSize(msg.Width, msg.Height)
+		}
+		if m.connList.inited {
+			m.connList.table.SetWidth(msg.Width)
+			m.connList.table.SetHeight(msg.Height - 5)
+		}
+		if m.connPicker.inited {
+			m.connPicker.list.SetSize(msg.Width, msg.Height)
+		}
+		if m.tablePicker.inited {
+			m.tablePicker.list.SetSize(msg.Width, msg.Height)
+		}
 		m.mappingEditor.width = msg.Width
 		m.mappingEditor.height = msg.Height
 		m.mappingForm.width = msg.Width
@@ -176,6 +185,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.masterKey = m.pwdPrompt.masterKey
 			m.current = screenMain
 			m.mainMenu = newMainMenuModel()
+			m.mainMenu.list.SetSize(m.width, m.height)
 			cmds = append(cmds, m.mainMenu.Init())
 		}
 
@@ -188,18 +198,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.pushHistory(m.current)
 				m.current = screenConnList
 				m.connList = newConnListModel(m.store)
+				m.connList.table.SetWidth(m.width)
+				m.connList.table.SetHeight(m.height - 5)
 				cmds = append(cmds, m.connList.Init())
 			case "Tables & Mappings":
 				m.flow = "mapping"
 				m.pushHistory(m.current)
 				m.current = screenConnPicker
 				m.connPicker = newConnPickerModel(m.store)
+				m.connPicker.list.SetSize(m.width, m.height)
 				cmds = append(cmds, m.connPicker.Init())
 			case "Sync":
 				m.flow = "sync"
 				m.pushHistory(m.current)
 				m.current = screenConnPicker
 				m.connPicker = newConnPickerModel(m.store)
+				m.connPicker.list.SetSize(m.width, m.height)
 				cmds = append(cmds, m.connPicker.Init())
 			case "History":
 				m.pushHistory(m.current)
@@ -302,6 +316,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.pushHistory(m.current)
 			m.current = screenTablePicker
 			m.tablePicker = newTablePickerModel(*m.selectedConn, m.masterKey, m.store, m.flow)
+			m.tablePicker.list.SetSize(m.width, m.height)
 			cmds = append(cmds, m.tablePicker.Init())
 		}
 

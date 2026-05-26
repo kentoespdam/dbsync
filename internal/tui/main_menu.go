@@ -31,6 +31,7 @@ func (i item) Description() string {
 type mainMenuModel struct {
 	list   list.Model
 	choice string
+	inited bool
 }
 
 func newMainMenuModel() mainMenuModel {
@@ -49,7 +50,8 @@ func newMainMenuModel() mainMenuModel {
 	l.SetFilteringEnabled(false)
 
 	return mainMenuModel{
-		list: l,
+		list:   l,
+		inited: true,
 	}
 }
 

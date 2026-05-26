@@ -9,10 +9,11 @@ import (
 )
 
 type connListModel struct {
-	table table.Model
-	store *storage.DB
-	conns []storage.Connection
-	err   error
+	table  table.Model
+	store  *storage.DB
+	conns  []storage.Connection
+	err    error
+	inited bool
 }
 
 func newConnListModel(db *storage.DB) connListModel {
@@ -34,8 +35,9 @@ func newConnListModel(db *storage.DB) connListModel {
 	t.SetStyles(s)
 
 	return connListModel{
-		table: t,
-		store: db,
+		table:  t,
+		store:  db,
+		inited: true,
 	}
 }
 

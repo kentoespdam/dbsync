@@ -41,6 +41,7 @@ type tablePickerModel struct {
 	err       error
 	choice    string
 	syncAll   bool
+	inited    bool
 }
 
 func newTablePickerModel(conn storage.Connection, masterKey []byte, store *storage.DB, flow string) tablePickerModel {
@@ -59,6 +60,7 @@ func newTablePickerModel(conn storage.Connection, masterKey []byte, store *stora
 		store:     store,
 		loading:   true,
 		spinner:   spinner.New(spinner.WithSpinner(spinner.Dot)),
+		inited:    true,
 	}
 }
 

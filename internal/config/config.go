@@ -103,29 +103,78 @@ func promptPasswordPair() (string, error) {
 	return string(p1), nil
 }
 
-var saltPathOverride string
+var (
+	saltPathOverride string
+	dbPathOverride   string
+)
 
-// DBPath returns the path to the SQLite database file, following XDG spec.
-func DBPath() (string, error) {
-	dataDir := os.Getenv("XDG_DATA_HOME")
-	if dataDir == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
-		dataDir = filepath.Join(home, ".local", "share")
+// portableDir returns the directory next to the running binary.
+// Falls back to CWD when the executable path cannot be resolved (e.g. `go run`).
+func portableDir() (string, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return os.Getwd()
 	}
-	return filepath.Join(dataDir, "dbsync", "dbsync.db"), nil
+	resolved, err := filepath.EvalSymlinks(exe)
+	if err != nil {
+		resolved = exe
+	}
+	return filepath.Dir(resolved), nil
 }
 
-// SaltPath returns the path to the salt file, following XDG spec.
+// DBPath returns the path to the SQLite database file, co-located with the binary.
+func DBPath() (string, error) {
+	if dbPathOverride != "" {
+		return dbPathOverride, nil
+	}
+	dir, err := portableDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "dbsync.db"), nil
+}
+
+// SaltPath returns the path to the salt file, co-located with the binary.
 func SaltPath() (string, error) {
 	if saltPathOverride != "" {
 		return saltPathOverride, nil
 	}
-	configDir, err := os.UserConfigDir()
+	dir, err := portableDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(configDir, "dbsync", "salt"), nil
+	return filepath.Join(dir, "dbsync.salt"), nil
+}
+
+// EnsureConsistentState enforces the invariant that salt and db live or die together.
+// If one exists without the other, the orphan is removed so the next startup runs
+// the first-run flow cleanly. Returns true when a wipe happened.
+func EnsureConsistentState() (wiped bool, err error) {
+	saltPath, err := SaltPath()
+	if err != nil {
+		return false, err
+	}
+	dbPath, err := DBPath()
+	if err != nil {
+		return false, err
+	}
+
+	_, saltErr := os.Stat(saltPath)
+	_, dbErr := os.Stat(dbPath)
+	saltMissing := os.IsNotExist(saltErr)
+	dbMissing := os.IsNotExist(dbErr)
+
+	switch {
+	case saltMissing && !dbMissing:
+		if err := os.Remove(dbPath); err != nil && !os.IsNotExist(err) {
+			return false, err
+		}
+		return true, nil
+	case !saltMissing && dbMissing:
+		if err := os.Remove(saltPath); err != nil && !os.IsNotExist(err) {
+			return false, err
+		}
+		return true, nil
+	}
+	return false, nil
 }

@@ -42,13 +42,19 @@ func main() {
 }
 
 func runTUI() {
+	if wiped, err := config.EnsureConsistentState(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error reconciling portable state: %v\n", err)
+		os.Exit(1)
+	} else if wiped {
+		fmt.Fprintln(os.Stderr, "Notice: salt/db pair was inconsistent; wiped orphan so first-run setup can proceed.")
+	}
+
 	dbPath, err := config.DBPath()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error determining database path: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Ensure directory exists
 	if err := os.MkdirAll(filepath.Dir(dbPath), 0700); err != nil {
 		fmt.Fprintf(os.Stderr, "Error creating data directory: %v\n", err)
 		os.Exit(1)

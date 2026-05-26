@@ -116,8 +116,15 @@ func (m connFormModel) Update(msg tea.Msg) (connFormModel, tea.Cmd) {
 			if msg.nextCmd != nil {
 				return m, msg.nextCmd
 			}
-			// Both OK, save
+			m.loadingMsg = "Saving..."
 			return m, m.save(false)
+		case saveResult:
+			m.loading = false
+			if msg.err != nil {
+				m.err = msg.err
+				return m, nil
+			}
+			return m, func() tea.Msg { return successMsg{} }
 		}
 	}
 
@@ -126,7 +133,10 @@ func (m connFormModel) Update(msg tea.Msg) (connFormModel, tea.Cmd) {
 			switch strings.ToLower(msg.String()) {
 			case "y":
 				m.showConfirm = false
-				return m, m.save(true)
+				m.err = nil
+				m.loading = true
+				m.loadingMsg = "Saving..."
+				return m, tea.Batch(m.spinner.Tick, m.save(true))
 			case "n", "esc":
 				m.showConfirm = false
 				m.err = nil
@@ -141,7 +151,9 @@ func (m connFormModel) Update(msg tea.Msg) (connFormModel, tea.Cmd) {
 		switch msg.String() {
 		case "tab", "enter":
 			if m.focused == len(m.inputs)-1 && msg.String() == "enter" {
-				return m, m.validateAndTest()
+				var cmd tea.Cmd
+				m, cmd = m.validateAndTest()
+				return m, cmd
 			}
 			m.inputs[m.focused].Blur()
 			m.focused = (m.focused + 1) % len(m.inputs)
@@ -169,16 +181,15 @@ func (m connFormModel) Update(msg tea.Msg) (connFormModel, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m connFormModel) validateAndTest() tea.Cmd {
-	// Simple validation
+func (m connFormModel) validateAndTest() (connFormModel, tea.Cmd) {
 	if m.inputs[fName].Value() == "" {
 		m.err = fmt.Errorf("name is required")
-		return nil
+		return m, nil
 	}
 	m.err = nil
 	m.loading = true
 	m.loadingMsg = "Testing source connection..."
-	return tea.Batch(m.spinner.Tick, m.testSource)
+	return m, tea.Batch(m.spinner.Tick, m.testSource)
 }
 
 type testResult struct {
@@ -231,6 +242,10 @@ func (m connFormModel) getConfig(source bool) mysql.Config {
 	}
 }
 
+type saveResult struct {
+	err error
+}
+
 func (m connFormModel) save(ignoreErrors bool) tea.Cmd {
 	return func() tea.Msg {
 		c := storage.Connection{
@@ -246,13 +261,10 @@ func (m connFormModel) save(ignoreErrors bool) tea.Cmd {
 		c.SourcePort, _ = strconv.Atoi(m.inputs[fSrcPort].Value())
 		c.DestPort, _ = strconv.Atoi(m.inputs[fDstPort].Value())
 
-		// Handle passwords
-		var existing storage.Connection
 		if m.isEdit {
-			var err error
-			existing, err = m.store.Connections().GetByID(context.Background(), m.connectionID)
+			existing, err := m.store.Connections().GetByID(context.Background(), m.connectionID)
 			if err != nil {
-				return err
+				return saveResult{err: err}
 			}
 			c.SourcePassword = existing.SourcePassword
 			c.DestPassword = existing.DestPassword
@@ -261,14 +273,14 @@ func (m connFormModel) save(ignoreErrors bool) tea.Cmd {
 		if m.inputs[fSrcPass].Value() != "" {
 			enc, err := crypto.Encrypt([]byte(m.inputs[fSrcPass].Value()), m.masterKey)
 			if err != nil {
-				return err
+				return saveResult{err: err}
 			}
 			c.SourcePassword = enc
 		}
 		if m.inputs[fDstPass].Value() != "" {
 			enc, err := crypto.Encrypt([]byte(m.inputs[fDstPass].Value()), m.masterKey)
 			if err != nil {
-				return err
+				return saveResult{err: err}
 			}
 			c.DestPassword = enc
 		}
@@ -279,11 +291,10 @@ func (m connFormModel) save(ignoreErrors bool) tea.Cmd {
 		} else {
 			_, err = m.store.Connections().Insert(context.Background(), c)
 		}
-
 		if err != nil {
-			return err
+			return saveResult{err: err}
 		}
-		return successMsg{}
+		return saveResult{}
 	}
 }
 

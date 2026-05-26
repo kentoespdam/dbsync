@@ -21,6 +21,7 @@ type connPickerModel struct {
 	store  *storage.DB
 	err    error
 	choice *storage.Connection
+	inited bool
 }
 
 func newConnPickerModel(store *storage.DB) connPickerModel {
@@ -29,8 +30,9 @@ func newConnPickerModel(store *storage.DB) connPickerModel {
 	l.SetShowStatusBar(false)
 
 	return connPickerModel{
-		list:  l,
-		store: store,
+		list:   l,
+		store:  store,
+		inited: true,
 	}
 }
 
