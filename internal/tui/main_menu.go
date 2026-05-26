@@ -14,11 +14,13 @@ func (i item) Description() string {
 	case "Connections":
 		return "Manage MySQL source and destination connections"
 	case "Tables & Mappings":
-		return "Configure table and column sync mappings (placeholder)"
+		return "Configure table and column sync mappings"
 	case "Sync":
-		return "Run synchronization jobs (placeholder)"
+		return "Run synchronization jobs"
 	case "History":
-		return "View sync logs and checkpoints (placeholder)"
+		return "View sync history and logs"
+	case "Checkpoints":
+		return "View and resume interrupted syncs"
 	case "Quit":
 		return "Exit the application"
 	default:
@@ -37,6 +39,7 @@ func newMainMenuModel() mainMenuModel {
 		item("Tables & Mappings"),
 		item("Sync"),
 		item("History"),
+		item("Checkpoints"),
 		item("Quit"),
 	}
 

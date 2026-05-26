@@ -14,6 +14,13 @@ const (
 	screenConnList
 	screenConnForm
 	screenConnTest
+	screenConnPicker
+	screenTablePicker
+	screenMappingEditor
+	screenMappingEditForm
+	screenRunSync
+	screenHistory
+	screenCheckpoints
 )
 
 type model struct {
@@ -25,15 +32,28 @@ type model struct {
 	err           error
 
 	// child models per screen
-	pwdPrompt passwordPromptModel
-	mainMenu  mainMenuModel
-	connList  connListModel
-	connForm  connFormModel
-	connTest  connTestModel
+	pwdPrompt   passwordPromptModel
+	mainMenu    mainMenuModel
+	connList    connListModel
+	connForm    connFormModel
+	connTest    connTestModel
+	connPicker  connPickerModel
+	tablePicker tablePickerModel
+	mappingEditor mappingEditorModel
+	mappingForm   mappingEditFormModel
+	runSync       runScreenModel
+	historyViewer historyModel
+	checkpointViewer checkpointsModel
+
+	selectedConn  *storage.Connection
+	selectedTable string
+	flow          string // "mapping" or "sync"
 
 	// Delete confirmation state
 	showDeleteConfirm bool
 	connToDelete      *storage.Connection
+
+	showDiscardConfirm bool
 }
 
 func New(db *storage.DB) model {
@@ -60,6 +80,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.mainMenu.list.SetSize(msg.Width, msg.Height)
 		m.connList.table.SetWidth(msg.Width)
 		m.connList.table.SetHeight(msg.Height - 5) // leave room for help text
+		m.connPicker.list.SetSize(msg.Width, msg.Height)
+		m.tablePicker.list.SetSize(msg.Width, msg.Height)
+		m.mappingEditor.width = msg.Width
+		m.mappingEditor.height = msg.Height
+		m.mappingForm.width = msg.Width
+		m.mappingForm.height = msg.Height
+		m.runSync.width = msg.Width
+		m.runSync.height = msg.Height
+		m.historyViewer.width = msg.Width
+		m.historyViewer.height = msg.Height
+		m.checkpointViewer.width = msg.Width
+		m.checkpointViewer.height = msg.Height
 
 
 	case tea.KeyMsg:
@@ -80,6 +112,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
+		if m.showDiscardConfirm {
+			switch msg.String() {
+			case "y", "Y":
+				m.showDiscardConfirm = false
+				m.mappingEditor.dirty = false
+				// Pop history
+				if len(m.history) > 0 {
+					m.current = m.history[len(m.history)-1]
+					m.history = m.history[:len(m.history)-1]
+				}
+				return m, nil
+			case "n", "N", "esc":
+				m.showDiscardConfirm = false
+				return m, nil
+			}
+			return m, nil
+		}
+
 		switch msg.String() {
 		case "ctrl+c":
 			return m, tea.Quit
@@ -87,6 +137,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.current == screenMain || m.current == screenPasswordPrompt {
 				return m, tea.Quit
 			}
+
+			if m.current == screenMappingEditor && m.mappingEditor.dirty {
+				m.showDiscardConfirm = true
+				return m, nil
+			}
+
 			// Pop history
 			if len(m.history) > 0 {
 				m.current = m.history[len(m.history)-1]
@@ -133,6 +189,28 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.current = screenConnList
 				m.connList = newConnListModel(m.store)
 				cmds = append(cmds, m.connList.Init())
+			case "Tables & Mappings":
+				m.flow = "mapping"
+				m.pushHistory(m.current)
+				m.current = screenConnPicker
+				m.connPicker = newConnPickerModel(m.store)
+				cmds = append(cmds, m.connPicker.Init())
+			case "Sync":
+				m.flow = "sync"
+				m.pushHistory(m.current)
+				m.current = screenConnPicker
+				m.connPicker = newConnPickerModel(m.store)
+				cmds = append(cmds, m.connPicker.Init())
+			case "History":
+				m.pushHistory(m.current)
+				m.current = screenHistory
+				m.historyViewer = newHistoryModel(m.store, nil)
+				cmds = append(cmds, m.historyViewer.Init())
+			case "Checkpoints":
+				m.pushHistory(m.current)
+				m.current = screenCheckpoints
+				m.checkpointViewer = newCheckpointsModel(m.store)
+				cmds = append(cmds, m.checkpointViewer.Init())
 			case "Quit":
 				return m, tea.Quit
 			}
@@ -214,14 +292,134 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.history = m.history[:len(m.history)-1]
 			}
 		}
+
+	case screenConnPicker:
+		m.connPicker, cmd = m.connPicker.Update(msg)
+		cmds = append(cmds, cmd)
+		if m.connPicker.choice != nil {
+			m.selectedConn = m.connPicker.choice
+			m.connPicker.choice = nil
+			m.pushHistory(m.current)
+			m.current = screenTablePicker
+			m.tablePicker = newTablePickerModel(*m.selectedConn, m.masterKey, m.store, m.flow)
+			cmds = append(cmds, m.tablePicker.Init())
+		}
+
+	case screenTablePicker:
+		m.tablePicker, cmd = m.tablePicker.Update(msg)
+		cmds = append(cmds, cmd)
+		if m.tablePicker.choice != "" {
+			m.selectedTable = m.tablePicker.choice
+			m.tablePicker.choice = ""
+			m.pushHistory(m.current)
+			if m.flow == "sync" {
+				m.current = screenRunSync
+				var tables []string
+				if m.tablePicker.syncAll {
+					tables, _ = m.store.Mappings().ListDistinctTables(context.Background(), m.selectedConn.ID)
+				} else {
+					tables = []string{m.selectedTable}
+				}
+				m.runSync = newRunScreenModel(m.store, *m.selectedConn, tables, m.masterKey, false)
+				cmds = append(cmds, m.runSync.Init())
+			} else {
+				m.current = screenMappingEditor
+				m.mappingEditor = newMappingEditorModel(*m.selectedConn, m.masterKey, m.store, m.selectedTable)
+				cmds = append(cmds, m.mappingEditor.Init())
+			}
+		}
+
+	case screenMappingEditor:
+		m.mappingEditor, cmd = m.mappingEditor.Update(msg)
+		cmds = append(cmds, cmd)
+
+		if m.mappingEditor.selectedMapping != nil {
+			m.pushHistory(m.current)
+			m.current = screenMappingEditForm
+			m.mappingForm = newMappingEditFormModel(*m.mappingEditor.selectedMapping, m.mappingEditor.sourceCols, m.mappingEditor.destCols, false)
+			cmds = append(cmds, m.mappingForm.Init())
+			m.mappingEditor.selectedMapping = nil
+		} else if m.mappingEditor.addMapping {
+			m.pushHistory(m.current)
+			m.current = screenMappingEditForm
+			m.mappingForm = newMappingEditFormModel(storage.Mapping{
+				ConnectionID: m.selectedConn.ID,
+				TableName:    m.selectedTable,
+			}, m.mappingEditor.sourceCols, m.mappingEditor.destCols, true)
+			cmds = append(cmds, m.mappingForm.Init())
+			m.mappingEditor.addMapping = false
+		}
+
+	case screenMappingEditForm:
+		m.mappingForm, cmd = m.mappingForm.Update(msg)
+		cmds = append(cmds, cmd)
+		if m.mappingForm.done {
+			if !m.mappingForm.canceled {
+				if m.mappingForm.isNew {
+					m.mappingEditor.mappings = append(m.mappingEditor.mappings, m.mappingForm.mapping)
+				} else {
+					// Update existing in editor's slice
+					for i, mp := range m.mappingEditor.mappings {
+						if mp.DestColumn == m.mappingForm.mapping.DestColumn {
+							m.mappingEditor.mappings[i] = m.mappingForm.mapping
+							break
+						}
+					}
+				}
+				m.mappingEditor.dirty = true
+				m.mappingEditor.refreshTable()
+				m.mappingEditor.recomputeWarnings()
+			}
+			m.mappingForm.done = false
+			// Pop history
+			if len(m.history) > 0 {
+				m.current = m.history[len(m.history)-1]
+				m.history = m.history[:len(m.history)-1]
+			}
+		}
+
+	case screenRunSync:
+		m.runSync, cmd = m.runSync.Update(msg)
+		cmds = append(cmds, cmd)
+
+	case screenHistory:
+		m.historyViewer, cmd = m.historyViewer.Update(msg)
+		cmds = append(cmds, cmd)
+
+	case screenCheckpoints:
+		m.checkpointViewer, cmd = m.checkpointViewer.Update(msg)
+		cmds = append(cmds, cmd)
+
+		if resumeMsg, ok := msg.(resumeCheckpointMsg); ok {
+			// Find connection
+			var conn storage.Connection
+			c, err := m.store.Connections().GetByID(context.Background(), resumeMsg.cp.ConnectionID)
+			if err == nil {
+				conn = c
+				m.selectedConn = &conn
+				m.selectedTable = resumeMsg.cp.TableName
+				m.flow = "sync"
+				m.pushHistory(m.current)
+				m.current = screenRunSync
+				m.runSync = newRunScreenModel(m.store, conn, []string{m.selectedTable}, m.masterKey, false)
+				cmds = append(cmds, m.runSync.Init())
+			}
+		}
 	}
 
 	return m, tea.Batch(cmds...)
 }
 
+type successMsg struct{}
+type errorMsg error
+
 func (m model) View() string {
 	if m.showDeleteConfirm && m.connToDelete != nil {
 		return "\nDelete connection '" + m.connToDelete.Name + "'?\n\n(y/N)"
+	}
+
+	if m.showDiscardConfirm {
+		return "\nDiscard unsaved mapping changes?\n\n(y/N)"
 	}
 
 	switch m.current {
@@ -235,6 +433,20 @@ func (m model) View() string {
 		return m.connForm.View()
 	case screenConnTest:
 		return m.connTest.View()
+	case screenConnPicker:
+		return m.connPicker.View()
+	case screenTablePicker:
+		return m.tablePicker.View()
+	case screenMappingEditor:
+		return m.mappingEditor.View()
+	case screenMappingEditForm:
+		return m.mappingForm.View()
+	case screenRunSync:
+		return m.runSync.View()
+	case screenHistory:
+		return m.historyViewer.View()
+	case screenCheckpoints:
+		return m.checkpointViewer.View()
 	default:
 		return "Unknown screen"
 	}

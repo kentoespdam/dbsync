@@ -287,8 +287,6 @@ func (m connFormModel) save(ignoreErrors bool) tea.Cmd {
 	}
 }
 
-type successMsg struct{}
-
 func (m connFormModel) View() string {
 	if m.loading {
 		return fmt.Sprintf("\n %s %s", m.spinner.View(), m.loadingMsg)

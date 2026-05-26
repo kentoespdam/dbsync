@@ -16,6 +16,20 @@ type ResolvedMapping struct {
 	ValueFn    func(row Row) (any, error)
 }
 
+// CountRows returns the total number of rows in a table.
+func CountRows(ctx context.Context, db *sql.DB, schema, table string) (int, error) {
+	quotedSchema := fmt.Sprintf("`%s`", strings.ReplaceAll(schema, "`", "``"))
+	quotedTable := fmt.Sprintf("`%s`", strings.ReplaceAll(table, "`", "``"))
+	query := fmt.Sprintf("SELECT COUNT(*) FROM %s.%s", quotedSchema, quotedTable)
+
+	var count int
+	err := db.QueryRowContext(ctx, query).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("count rows: %w", err)
+	}
+	return count, nil
+}
+
 // SelectBatch fetches a batch of rows from a table using primary key-based pagination.
 func SelectBatch(ctx context.Context, db *sql.DB, schema, table string, pkCols []string, lastPK []any, limit int) (rows []Row, nextPK []any, err error) {
 	if len(pkCols) == 0 {

@@ -26,10 +26,10 @@ masih `blocked` sampai blocker-nya close.
 | [x] | 2 | [002](issues/002-mysql-connectivity-schema-inspection.md) | `dbsync-i39` | [#2](https://github.com/kentoespdam/dbsync/issues/2) | MySQL connectivity & schema inspection | CLI | 001 | `closed` |
 | [x] | 3 | [003](issues/003-column-mapping-crud.md) | `dbsync-spj` | [#3](https://github.com/kentoespdam/dbsync/issues/3) | Column mapping CRUD | CLI | 002 | `closed` |
 | [x] | 4 | [004](issues/004-single-batch-sync-tracer.md) | `dbsync-afe` | [#4](https://github.com/kentoespdam/dbsync/issues/4) | Single-batch sync tracer | CLI | 003 | `closed` |
-| [ ] | **5** ▶ | [005](issues/005-checkpoint-resume-history-all-tables-dry-run.md) | `dbsync-c6i` | [#5](https://github.com/kentoespdam/dbsync/issues/5) | Checkpoint, resume, history, `--all-tables`, `--dry-run` | CLI | 004 | `ready-for-agent` |
+| [x] | **5** | [005](issues/005-checkpoint-resume-history-all-tables-dry-run.md) | `dbsync-c6i` | [#5](https://github.com/kentoespdam/dbsync/issues/5) | Checkpoint, resume, history, `--all-tables`, `--dry-run` | CLI | 004 | `closed` |
 | [x] | 6 | [006](issues/006-tui-shell-connection-management.md) | `dbsync-45p` | [#6](https://github.com/kentoespdam/dbsync/issues/6) | TUI shell + connection management | TUI | 001 | `closed` |
-| [ ] | 7 | [007](issues/007-tui-table-picker-mapping-editor.md) | `dbsync-nvt` | [#7](https://github.com/kentoespdam/dbsync/issues/7) | TUI table picker + mapping editor | TUI | 003, 006 | `needs-triage` |
-| [ ] | 8 | [008](issues/008-tui-run-screen-history-viewer.md) | `dbsync-0mr` | [#8](https://github.com/kentoespdam/dbsync/issues/8) | TUI run / history / checkpoint screens | TUI | 005, 007 | `needs-triage` |
+| [x] | 7 | [007](issues/007-tui-table-picker-mapping-editor.md) | `dbsync-nvt` | [#7](https://github.com/kentoespdam/dbsync/issues/7) | TUI table picker + mapping editor | TUI | 003, 006 | `closed` |
+| [x] | 8 | [008](issues/008-tui-run-screen-history-viewer.md) | `dbsync-0mr` | [#8](https://github.com/kentoespdam/dbsync/issues/8) | TUI run / history / checkpoint screens | TUI | 005, 007 | `closed` |
 
 ## Jalur paralel
 
@@ -89,9 +89,9 @@ Untuk setiap issue, agent harus:
 Update tanggal: **2026-05-26**
 
 - 8 issues total, semua ter-mirror di Beads + GitHub.
-- 1 ready-for-agent (`dbsync-spj` / GH #3).
-- 4 needs-triage (blocked sampai blocker close).
-- 0 in progress, 3 closed (001, 002, 006).
+- 0 ready-for-agent.
+- 0 needs-triage.
+- 0 in progress, 8 closed (all).
 
 Untuk status terkini, jalankan:
 

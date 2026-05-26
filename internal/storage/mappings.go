@@ -173,6 +173,25 @@ func (r *MappingRepo) DeleteByDest(ctx context.Context, connID int64, table, des
 	return err
 }
 
+func (r *MappingRepo) ListDistinctTables(ctx context.Context, connID int64) ([]string, error) {
+	query := `SELECT DISTINCT table_name FROM sync_column_mappings WHERE connection_id = ? ORDER BY table_name`
+	rows, err := r.db.QueryContext(ctx, query, connID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tables []string
+	for rows.Next() {
+		var table string
+		if err := rows.Scan(&table); err != nil {
+			return nil, err
+		}
+		tables = append(tables, table)
+	}
+	return tables, nil
+}
+
 func (r *MappingRepo) Exists(ctx context.Context, connID int64, table string) (bool, error) {
 	query := `SELECT 1 FROM sync_column_mappings WHERE connection_id = ? AND table_name = ? LIMIT 1`
 	var exists int

@@ -54,6 +54,11 @@ func New(connectionName, tableName string) (*Logger, error) {
 	}, nil
 }
 
+// Path returns the absolute path to the log file.
+func (l *Logger) Path() string {
+	return l.file.Name()
+}
+
 // RowError logs an error that occurred for a specific row.
 func (l *Logger) RowError(batch int, pk any, err error, sqlTemplate string) {
 	l.log(Entry{
