@@ -1,6 +1,40 @@
 # Project Instructions for AI Agents
 
-This file provides instructions and context for AI coding agents working on this project.
+**Canonical instructions for ALL agents on this project (Claude, Gemini, Codex, etc.).**
+`AGENTS.md` and `GEMINI.md` are thin pointers — keep new rules here.
+
+## Project Overview
+
+`dbsync` = single-binary Go tool untuk **one-way MySQL table sync** (source → dest). TUI (bubbletea) untuk setup interaktif + CLI (cobra) untuk cron. SQLite = single source of truth. Pure Go (no CGo).
+
+**Read first:** `CONTEXT.md` (quick orientation) → `docs/PRD-v1.md` (full spec) → `docs/ARCHITECTURE.md` (design). Per-issue brief di `docs/issues/00N-*.md`.
+
+## Shell — Non-Interactive Only
+
+Cegah hang prompt:
+- Files/Dirs: `-f` untuk `cp`/`mv`/`rm`.
+- SSH/SCP: `-o BatchMode=yes`.
+- Packages: `-y` untuk `apt-get`; `HOMEBREW_NO_AUTO_UPDATE=1` untuk `brew`.
+
+## Coding Standards
+
+- **Read `CONTEXT.md` + relevant `docs/` before starting.**
+- **`context7` REQUIRED** untuk lib (bubbletea, cobra, mysql, sqlite, scrypt) sebelum tulis kode — internal knowledge stale.
+- **DRY comments:** reference issue ID (`bd-XX`), jangan duplikasi deskripsi issue di kode.
+- **Max 120 lines per file/function** — pecah kalau lebih.
+- **No DI framework, no premature abstraction** — junior dev + local AI readable.
+- **Test wajib:** `crypto`, `storage`, `mysql`, `engine`. `cli`/`tui` cukup manual QA.
+- Integration test: tag `//go:build integration` agar `go test ./...` default tidak butuh Docker.
+
+## Build & Test
+
+```bash
+go build -o dbsync ./cmd/dbsync
+./dbsync                                            # TUI
+./dbsync run --connection=<name> --table=<table>    # CLI
+go test ./...                                       # unit
+go test -tags=integration ./...                     # + MySQL containers
+```
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->
 ## Beads Issue Tracker
@@ -48,25 +82,6 @@ bd close <id>         # Complete work
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
 <!-- END BEADS INTEGRATION -->
-
-
-## Build & Test
-
-_Add your build and test commands here_
-
-```bash
-# Example:
-# npm install
-# npm test
-```
-
-## Architecture Overview
-
-_Add a brief overview of your project architecture_
-
-## Conventions & Patterns
-
-_Add your project-specific conventions here_
 
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence

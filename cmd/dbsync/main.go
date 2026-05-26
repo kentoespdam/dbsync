@@ -12,8 +12,13 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/user/dbsync/internal/cli"
+	"github.com/user/dbsync/internal/config"
+	"github.com/user/dbsync/internal/storage"
+	"github.com/user/dbsync/internal/tui"
 )
 
 // version is set at build time via -ldflags "-X main.version=...".
@@ -37,8 +42,28 @@ func main() {
 }
 
 func runTUI() {
-	// TODO: wire up bubbletea program here (internal/tui)
-	fmt.Println("dbsync TUI — coming soon")
-	fmt.Println("(stub: internal/tui not yet implemented)")
-	fmt.Println("Run 'dbsync help' for CLI usage.")
+	dbPath, err := config.DBPath()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error determining database path: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Ensure directory exists
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0700); err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating data directory: %v\n", err)
+		os.Exit(1)
+	}
+
+	db, err := storage.Open(dbPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error opening database: %v\n", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	p := tea.NewProgram(tui.New(db), tea.WithAltScreen())
+	if _, err := p.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error running TUI: %v\n", err)
+		os.Exit(1)
+	}
 }

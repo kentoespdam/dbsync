@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/user/dbsync/internal/config"
 	"github.com/user/dbsync/internal/crypto"
+	"github.com/user/dbsync/internal/mysql"
 	"github.com/user/dbsync/internal/storage"
 	"golang.org/x/term"
 )
@@ -29,6 +30,10 @@ func readPassword(reader *bufio.Reader, prompt string) ([]byte, error) {
 	}
 	return []byte(strings.TrimSpace(p)), nil
 }
+
+var (
+	noTest bool
+)
 
 var connAddCmd = &cobra.Command{
 	Use:   "add",
@@ -77,10 +82,6 @@ var connAddCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		sPass, err := crypto.Encrypt(sPassBytes, masterKey)
-		if err != nil {
-			return err
-		}
 
 		fmt.Print("Database: ")
 		sDB, _ := reader.ReadString('\n')
@@ -107,14 +108,65 @@ var connAddCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		dPass, err := crypto.Encrypt(dPassBytes, masterKey)
-		if err != nil {
-			return err
-		}
 
 		fmt.Print("Database: ")
 		dDB, _ := reader.ReadString('\n')
 		dDB = strings.TrimSpace(dDB)
+
+		if !noTest {
+			fmt.Println("\nTesting connections...")
+			
+			// Test Source
+			fmt.Printf("Source (%s:%d/%s)... ", sHost, sPort, sDB)
+			sPool, err := mysql.Open(mysql.Config{
+				Host:     sHost,
+				Port:     sPort,
+				User:     sUser,
+				Password: string(sPassBytes),
+				DBName:   sDB,
+			})
+			if err != nil {
+				fmt.Printf("FAILED: %v\n", err)
+				fmt.Print("Continue anyway? [y/N]: ")
+				confirm, _ := reader.ReadString('\n')
+				if !strings.HasPrefix(strings.ToLower(strings.TrimSpace(confirm)), "y") {
+					return fmt.Errorf("connection test failed")
+				}
+			} else {
+				fmt.Println("OK")
+				sPool.Close()
+			}
+
+			// Test Destination
+			fmt.Printf("Destination (%s:%d/%s)... ", dHost, dPort, dDB)
+			dPool, err := mysql.Open(mysql.Config{
+				Host:     dHost,
+				Port:     dPort,
+				User:     dUser,
+				Password: string(dPassBytes),
+				DBName:   dDB,
+			})
+			if err != nil {
+				fmt.Printf("FAILED: %v\n", err)
+				fmt.Print("Continue anyway? [y/N]: ")
+				confirm, _ := reader.ReadString('\n')
+				if !strings.HasPrefix(strings.ToLower(strings.TrimSpace(confirm)), "y") {
+					return fmt.Errorf("connection test failed")
+				}
+			} else {
+				fmt.Println("OK")
+				dPool.Close()
+			}
+		}
+
+		sPass, err := crypto.Encrypt(sPassBytes, masterKey)
+		if err != nil {
+			return err
+		}
+		dPass, err := crypto.Encrypt(dPassBytes, masterKey)
+		if err != nil {
+			return err
+		}
 
 		conn := storage.Connection{
 			Name:           name,
@@ -138,4 +190,8 @@ var connAddCmd = &cobra.Command{
 		fmt.Printf("\nConnection '%s' added successfully (ID: %d)\n", name, id)
 		return nil
 	},
+}
+
+func init() {
+	connAddCmd.Flags().BoolVar(&noTest, "no-test", false, "skip connection testing")
 }

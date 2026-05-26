@@ -13,4 +13,5 @@ func init() {
 	connCmd.AddCommand(connAddCmd)
 	connCmd.AddCommand(connListCmd)
 	connCmd.AddCommand(connRmCmd)
+	connCmd.AddCommand(connTestCmd)
 }

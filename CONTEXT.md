@@ -1,188 +1,91 @@
 # dbsync — Project Context
 
-> Quick-orientation file untuk agent baru / kolaborator. Bukan pengganti
-> dokumentasi lengkap — lihat `docs/PRD-v1.md` dan `docs/ARCHITECTURE.md`
-> untuk detail. File ini cuma rangkuman "apa, kenapa, di mana".
+> Quick orientation. Full spec: `docs/PRD-v1.md`, `docs/ARCHITECTURE.md`.
 
----
+## What
+Single-binary Go tool untuk **MySQL table sync satu arah** (source → dest).
+Bikin operasi ad-hoc (`mysqldump`, shell script) jadi **auditable, resumable, cron-friendly**.
 
-## 1. Apa ini?
+Dua mode, satu binary, satu SQLite:
+- **TUI** `./dbsync` — setup koneksi, mapping, sync interaktif.
+- **CLI** `./dbsync run --connection=X --table=Y` — cron. Exit 0/1/2.
 
-`dbsync` adalah single-binary Go tool untuk **sinkronisasi tabel MySQL
-satu arah** (source → destination). Tujuannya: bikin operasi yang
-selama ini ad-hoc (`mysqldump | mysql`, shell script, klik GUI) jadi
-**auditable, resumable, dan cron-friendly**, tanpa harus pasang
-infrastruktur baru.
+Status: **v1, scaffolding phase** (belum end-to-end).
 
-Dua mode operasi, satu binary, satu storage SQLite:
+## Why (5 pain points)
+1. Tidak ada riwayat sync.
+2. Tidak resumable.
+3. Tidak ada column mapping (rename, default, kolom ekstra di dest).
+4. Credential plaintext di script.
+5. Tidak cocok untuk cron.
 
-| Mode | Cara jalankan | Untuk apa |
-|------|---------------|-----------|
-| **TUI** | `./dbsync` | Setup koneksi, mapping kolom, sync interaktif dengan progress bar |
-| **CLI** | `./dbsync run --connection=X --table=Y` | Cron / automation. Exit code semantik (0/1/2) |
+## Prinsip non-negotiable
+- Simple > clever. No DI framework. Junior dev + local AI readable.
+- **SQLite = SSoT.** TUI/CLI tidak boleh state divergen.
+- **Frontend-agnostic core.** Engine emit `<-chan Event`.
+- **No CGo** (`modernc.org/sqlite`).
+- Test wajib: `crypto`, `storage`, `mysql`, `engine`. Manual QA: `cli`, `tui`.
+- Integration test pakai `//go:build integration`.
 
-Status saat ini: **v1, scaffolding phase.** Belum functional end-to-end.
-
----
-
-## 2. Kenapa dibikin?
-
-Lihat `docs/PRD-v1.md` §Problem Statement. Singkatnya, 5 pain point:
-
-1. Tidak ada visibility riwayat sync.
-2. Tidak resumable kalau gagal di tengah.
-3. Tidak ada column mapping (rename, default value, kolom ekstra di dest).
-4. Credential tersebar plaintext di shell script.
-5. Tidak cocok untuk cron (butuh interaksi manual).
-
----
-
-## 3. Prinsip desain (non-negotiable)
-
-Dipanggil ulang di mana-mana — patuhi tanpa nego:
-
-- **Simple > clever.** Tidak ada DI framework. Tidak ada abstraksi
-  layered yang tidak perlu. Code harus terbaca junior dev + local AI.
-- **SQLite = Single Source of Truth.** TUI dan CLI **tidak boleh** pegang
-  state config in-memory yang divergen dari DB.
-- **Frontend-agnostic core.** Engine emit `<-chan Event`; TUI dan CLI
-  consume channel yang sama.
-- **No CGo.** `modernc.org/sqlite` (pure Go) — supaya cross-compile gampang
-  dari Mac → Linux tanpa Docker.
-- **Test priority:** `crypto`, `storage`, `mysql`, `engine` **wajib** test.
-  `cli` dan `tui` cukup manual QA.
-- **Integration test:** tag dengan `//go:build integration` supaya
-  `go test ./...` default tidak butuh Docker.
-
----
-
-## 4. Layout
-
+## Layout
 ```
-cmd/dbsync/         entry point (TUI vs CLI dispatch)
+cmd/dbsync/         entry point
 internal/
-├── crypto/         AES-256-GCM + scrypt KDF (pure, no I/O)
-├── config/         Master password lifecycle (env → stdin → salt file)
-├── storage/        SQLite repo (connections, mappings, checkpoints, history)
-├── mysql/          Pool + INFO_SCHEMA + batch select + upsert  ⟵ belum ada
-├── engine/         Sync orchestrator, emit channel event       ⟵ belum ada
-├── logger/         JSON-lines log writer dengan redaction      ⟵ belum ada
-├── cli/            cobra command handlers
-└── tui/            bubbletea models, views, update             ⟵ belum ada
-
-docs/
-├── PRD-v1.md              Product requirements
-├── ARCHITECTURE.md        Design document (data flow, schema, security)
-├── EXECUTION-ORDER.md     Roadmap tracer-bullet (8 issues)
-└── issues/                Spec per-issue (001–008)
+├── crypto/         AES-256-GCM + scrypt KDF  ✅
+├── config/         master password lifecycle  ✅
+├── storage/        SQLite repo + migration    ✅ (partial)
+├── mysql/          pool + INFO_SCHEMA + upsert  ⟵ TBD
+├── engine/         sync orchestrator            ⟵ TBD
+├── logger/         JSONL log + redaction        ⟵ TBD
+├── cli/            cobra handlers              ✅ skeleton
+└── tui/            bubbletea                    ⟵ TBD
+docs/{PRD-v1, ARCHITECTURE, EXECUTION-ORDER}.md + issues/001-008.md
 ```
 
-Yang sudah ada (Phase 1 scaffolding):
-- `internal/crypto/` — encrypt/decrypt + KDF, sudah ada test
-- `internal/config/` — master key loader, sudah ada test
-- `internal/storage/` — `db.go`, `connections.go` + migration `001_init.sql`
-- `internal/cli/` — skeleton `cli.go` + `conn.go`
+## Stack
+Go 1.25 · bubbletea+bubbles+lipgloss · cobra · go-sql-driver/mysql · modernc.org/sqlite · x/crypto/scrypt · x/term.
 
----
+## Security (ringkas)
+- AES-256-GCM, nonce 12-byte random prepended.
+- scrypt KDF: N=32768, r=8, p=1, keyLen=32. Salt di `~/.config/dbsync/salt`.
+- Master password: TUI prompt 1x/session, RAM only. CLI dari `DBSYNC_MASTER_KEY` (64-char hex) → stdin → fail jelas.
+- Log redaction: SQL template di-log, argumen tidak. Password di error: `***`.
 
-## 5. Stack
+## Workflow agent
+Pakai **bd (Beads)** untuk task tracking (bukan TodoWrite). Per issue:
+1. `bd ready` → `bd update <id> --claim`
+2. Baca `docs/issues/00N-*.md` + query `context7` untuk lib di section "REQUIRED".
+3. Implement + penuhi acceptance criteria.
+4. `bd close <id>`.
 
-- **Go 1.25** (modul `github.com/user/dbsync`)
-- **TUI:** `charmbracelet/bubbletea` + `bubbles` + `lipgloss`
-- **CLI:** `spf13/cobra`
-- **MySQL driver:** `go-sql-driver/mysql`
-- **SQLite:** `modernc.org/sqlite` (no CGo)
-- **Crypto:** `golang.org/x/crypto/scrypt`, stdlib `crypto/cipher`
-- **Term:** `golang.org/x/term`
+**Session close:** `git pull --rebase && bd dolt push && git push && git status`.
 
----
-
-## 6. Security model (ringkas)
-
-- AES-256-GCM, nonce per ciphertext (random 12 byte, prepended).
-- scrypt KDF: `N=32768, r=8, p=1, keyLen=32`.
-- Salt random per-install di `~/.config/dbsync/salt`.
-- Master password: prompt sekali per TUI session, hold di RAM saja —
-  **tidak pernah** ditulis ke disk.
-- CLI ambil dari `DBSYNC_MASTER_KEY` (32-byte hex / 64 char) → fallback
-  stdin prompt → fail dengan instruction jelas kalau non-interactive.
-- Log redaction: SQL template di-log, argumen tidak. Password field di
-  error message: selalu `***`.
-
-Detail di `docs/PRD-v1.md` §Security.
-
----
-
-## 7. Workflow agent
-
-**Wajib pakai `bd` (Beads) untuk task tracking** — bukan TodoWrite,
-bukan markdown TODO list. Aturan ini ada di `CLAUDE.md`.
-
-Per issue:
-
-1. `bd ready` — ambil issue yang siap (open + unblocked).
-2. `bd update <id> --claim` — claim.
-3. Baca `docs/issues/00N-*.md` lengkap (= agent brief).
-4. Baca `~/.claude/rules/context7.md`, lalu query `context7` untuk
-   tiap library yang disebut di section "REQUIRED" issue body.
-5. Implement sesuai langkah numbered di body issue.
-6. Penuhi semua acceptance criteria.
-7. `bd close <id>` setelah PR merged.
-8. `bd ready` lagi — biasanya ada issue baru yang unblocked.
-
-**Session close** (CLAUDE.md mandatory):
-```bash
-git pull --rebase
-bd dolt push
-git push
-git status   # harus "up to date with origin"
+## Dependency graph (8 issues v1)
 ```
-
----
-
-## 8. Dependency graph (8 issues, v1)
-
+001 ── 002 ── 003 ── 004 ── 005 ────┐
+ │                                   │
+ └──── 006 ── 007 ──────────── 008 ──┘
 ```
-001 ── 002 ── 003 ── 004 ── 005 ────────┐
- │                                       │
- └──────── 006 ── 007 ─────────── 008 ──┘
-```
+CLI: 002→003→004→005. TUI: 006→007(butuh 003)→008(butuh 005+007).
+Critical path: 001→002→003→004→005→008.
+SSoT dependency = Beads (`bd ready`), bukan markdown.
 
-- **CLI track:** 002 → 003 → 004 → 005
-- **TUI track:** 006 → 007 (butuh 003) → 008 (butuh 005 + 007)
-- **Critical path:** 001 → 002 → 003 → 004 → 005 → 008
+Snapshot 2026-05-26: 1 `ready-for-agent` (`dbsync-61b` / GH #1), 7 `needs-triage`.
 
-Sumber kebenaran dependency: **Beads** (`bd ready`). File markdown hanya
-peta tingkat tinggi — bisa basi, Beads tidak.
+## Coding rules
+- Sebelum edit symbol: `gitnexus_impact({target, direction:"upstream"})`.
+- Sebelum commit: `gitnexus_detect_changes()`.
+- Sebelum pakai lib X: query `context7`.
+- Jangan `ls -R` / grep buta — pakai `gitnexus_query` / `mcp_graphify_*`.
 
-Status snapshot (2026-05-26): 1 `ready-for-agent` (`dbsync-61b` / GH #1),
-7 `needs-triage` (blocked sampai blocker close).
-
----
-
-## 9. Penting saat coding
-
-- **Sebelum edit symbol:** jalankan `gitnexus_impact({target, direction:"upstream"})`.
-  Lihat `CLAUDE.md` §GitNexus.
-- **Sebelum commit:** jalankan `gitnexus_detect_changes()`.
-- **Sebelum coding library X:** query `context7` untuk dapat snippet
-  versi terkini. Cek `~/.claude/rules/context7.md`.
-- **Tidak pakai** `ls -R` / grep buta — pakai `gitnexus_query` /
-  `mcp_graphify_*` (rules `graphify.md`).
-
----
-
-## 10. Pointer cepat
-
+## Pointer
 | Mau tahu | Buka |
-|----------|------|
-| Apa yang dibangun & kenapa | `docs/PRD-v1.md` |
+|---|---|
+| Apa & kenapa | `docs/PRD-v1.md` |
 | Arsitektur & schema | `docs/ARCHITECTURE.md` |
-| Urutan kerja & dependency | `docs/EXECUTION-ORDER.md` |
-| Detail per issue (agent brief) | `docs/issues/00N-*.md` |
-| Aturan agent (beads, session close) | `CLAUDE.md` |
+| Urutan kerja | `docs/EXECUTION-ORDER.md` |
+| Detail issue | `docs/issues/00N-*.md` |
+| Aturan agent | `CLAUDE.md` |
 | GitHub mirror | https://github.com/kentoespdam/dbsync/issues |
-
----
 
 *Last updated: 2026-05-26.*

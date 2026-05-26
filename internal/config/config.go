@@ -105,6 +105,19 @@ func promptPasswordPair() (string, error) {
 
 var saltPathOverride string
 
+// DBPath returns the path to the SQLite database file, following XDG spec.
+func DBPath() (string, error) {
+	dataDir := os.Getenv("XDG_DATA_HOME")
+	if dataDir == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		dataDir = filepath.Join(home, ".local", "share")
+	}
+	return filepath.Join(dataDir, "dbsync", "dbsync.db"), nil
+}
+
 // SaltPath returns the path to the salt file, following XDG spec.
 func SaltPath() (string, error) {
 	if saltPathOverride != "" {
