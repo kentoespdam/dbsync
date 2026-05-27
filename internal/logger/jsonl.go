@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sync"
 	"time"
+
+	"github.com/user/dbsync/internal/paths"
+	"github.com/user/dbsync/internal/redact"
 )
 
 // Logger writes structured log entries to a JSONL file.
@@ -27,14 +29,13 @@ type Entry struct {
 	SQLTemplate string    `json:"sql_template,omitempty"`
 }
 
-// New creates a new Logger that writes to a timestamped file in ~/.local/share/dbsync/logs/.
+// New creates a new Logger that writes to a timestamped file in <exeDir>/logs/.
 func New(connectionName, tableName string) (*Logger, error) {
-	home, err := os.UserHomeDir()
+	logDir, err := paths.LogsDir()
 	if err != nil {
-		return nil, fmt.Errorf("get home dir: %w", err)
+		return nil, fmt.Errorf("resolve logs dir: %w", err)
 	}
 
-	logDir := filepath.Join(home, ".local", "share", "dbsync", "logs")
 	if err := os.MkdirAll(logDir, 0700); err != nil {
 		return nil, fmt.Errorf("create log dir: %w", err)
 	}
@@ -95,30 +96,5 @@ func (l *Logger) Close() error {
 	return l.file.Close()
 }
 
-var (
-	// regex to find 'values' inside single or double quotes
-	quoteRegex = regexp.MustCompile(`'[^']*'|"[^"]*"`)
-)
-
-// SanitizeError redacts potential row values from error messages.
-func SanitizeError(err error) string {
-	if err == nil {
-		return ""
-	}
-	msg := err.Error()
-	
-	// MySQL error messages often contain sensitive data in quotes.
-	// Example: Duplicate entry 'john@example.com' for key 'users.email'
-	// We want to redact the 'john@example.com' but maybe keep the key name?
-	// The requirement says: "jika error mengandung pattern near '...', strip nilai di dalam quotes"
-	
-	// Simplest approach: redact all quoted strings in messages that look like data errors.
-	// But let's follow the "near" or "entry" pattern more specifically if possible, 
-	// or just redact all quotes to be safe.
-	
-	return quoteRegex.ReplaceAllStringFunc(msg, func(s string) string {
-		// If it's a very short quoted string (like a column name or key name), maybe keep it?
-		// No, let's just redact all to be safe and simple as per "Simple > clever".
-		return "'[REDACTED]'"
-	})
-}
+// Deprecated: use redact.Error directly.
+func SanitizeError(err error) string { return redact.Error(err) }

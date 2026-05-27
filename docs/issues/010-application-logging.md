@@ -240,8 +240,8 @@ File:
 - `internal/paths/paths_test.go`
 
 Test minimum:
-- [ ] `LogsDir()` returns non-empty, ends with `/logs`.
-- [ ] Path == `filepath.Join(filepath.Dir(os.Executable()), "logs")`.
+- [x] `LogsDir()` returns non-empty, ends with `/logs`.
+- [x] Path == `filepath.Join(filepath.Dir(os.Executable()), "logs")`.
 
 ### Step 2 — `internal/redact/`
 File:
@@ -249,11 +249,11 @@ File:
 - `internal/redact/error_test.go`
 
 Test minimum:
-- [ ] `Error(nil)` == `""`.
-- [ ] `Error(errors.New("Duplicate entry 'john@x.com' for key 'users.email'"))` returns `Duplicate entry '[REDACTED]' for key '[REDACTED]'`.
-- [ ] Pesan tanpa quote diteruskan utuh.
-- [ ] Double-quoted ikut ter-redact.
-- [ ] Key name (di luar quote pertama) tidak hilang teksnya.
+- [x] `Error(nil)` == `""`.
+- [x] `Error(errors.New("Duplicate entry 'john@x.com' for key 'users.email'"))` returns `Duplicate entry '[REDACTED]' for key '[REDACTED]'`.
+- [x] Pesan tanpa quote diteruskan utuh.
+- [x] Double-quoted ikut ter-redact.
+- [x] Key name (di luar quote pertama) tidak hilang teksnya.
 
 ### Step 3 — `internal/applog/`
 File:
@@ -262,29 +262,29 @@ File:
 - `internal/applog/applog_test.go`
 
 Test minimum (tanpa Docker, no integration):
-- [ ] `resolveLevel` table-driven: default→Info, debug→Debug, warn→Warn, error→Error, "DEBUG"→Debug (case-insensitive), invalid→Info.
-- [ ] `initWithPath(t.TempDir()+"/x.log")` membuat file, slog.Default() berubah, `closer.Close()` aman dipanggil 2x (idempotent enough).
-- [ ] Tulis 1 entry `slog.Error("x", "err", errors.New("Boom 'sekret'"))` → baca file → assert mengandung `[REDACTED]` dan TIDAK mengandung `sekret`.
-- [ ] `TestSilent(t)` mengembalikan slog.Default() ke handler sebelumnya saat `t.Cleanup` jalan.
-- [ ] `TestSilent` dengan `DBSYNC_TEST_LOG=1` (set via `t.Setenv`) → tidak meng-override default.
+- [x] `resolveLevel` table-driven: default→Info, debug→Debug, warn→Warn, error→Error, "DEBUG"→Debug (case-insensitive), invalid→Info.
+- [x] `initWithPath(t.TempDir()+"/x.log")` membuat file, slog.Default() berubah, `closer.Close()` aman dipanggil 2x (idempotent enough).
+- [x] Tulis 1 entry `slog.Error("x", "err", errors.New("Boom 'sekret'"))` → baca file → assert mengandung `[REDACTED]` dan TIDAK mengandung `sekret`.
+- [x] `TestSilent(t)` mengembalikan slog.Default() ke handler sebelumnya saat `t.Cleanup` jalan.
+- [x] `TestSilent` dengan `DBSYNC_TEST_LOG=1` (set via `t.Setenv`) → tidak meng-override default.
 
 ### Step 4 — Migrasi `internal/logger/jsonl.go`
-- [ ] Ganti `logDir` resolution ke `paths.LogsDir()`.
-- [ ] `SanitizeError` jadi wrapper `redact.Error()`; hapus regex lokal.
-- [ ] Existing test di `internal/logger/` masih hijau (jangan ubah test contract; cuma path yang beda — kalau test asumsi path home, sesuaikan minimal).
+- [x] Ganti `logDir` resolution ke `paths.LogsDir()`.
+- [x] `SanitizeError` jadi wrapper `redact.Error()`; hapus regex lokal.
+- [x] Existing test di `internal/logger/` masih hijau (jangan ubah test contract; cuma path yang beda — kalau test asumsi path home, sesuaikan minimal).
 
 ### Step 5 — Wiring `cmd/dbsync/main.go`
-- [ ] Init applog paling awal; pre-init error → stderr + exit 1.
-- [ ] `defer closer.Close()`.
-- [ ] Top-level command error → `slog.Error("command failed", "err", err)` + `os.Exit(1)`.
+- [x] Init applog paling awal; pre-init error → stderr + exit 1.
+- [x] `defer closer.Close()`.
+- [x] Top-level command error → `slog.Error("command failed", "err", err)` + `os.Exit(1)`.
 
 ### Step 6 — Per-package `var log` di paket eksisting
 Tambah `log.go` minimal di:
-- [ ] `internal/engine/log.go` (kalau dir belum ada, SKIP — biarkan konsumen yang buat saat package dibikin)
-- [ ] `internal/mysql/log.go` (idem)
-- [ ] `internal/storage/log.go`
-- [ ] `internal/cli/log.go`
-- [ ] `internal/tui/log.go`
+- [x] `internal/engine/log.go` (kalau dir belum ada, SKIP — biarkan konsumen yang buat saat package dibikin)
+- [x] `internal/mysql/log.go` (idem)
+- [x] `internal/storage/log.go`
+- [x] `internal/cli/log.go`
+- [x] `internal/tui/log.go`
 
 Cek dir mana yang sudah ada via `ls internal/`. JANGAN bikin dir baru untuk package yang masih `⟵ TBD` di `CONTEXT.md`.
 
@@ -292,26 +292,26 @@ Cek dir mana yang sudah ada via `ls internal/`. JANGAN bikin dir baru untuk pack
 
 ## Acceptance criteria (rollup)
 
-- [ ] `context7` MCP di-query SEBELUM coding (catat di PR description).
-- [ ] `internal/paths/paths.go` + test hijau.
-- [ ] `internal/redact/error.go` + test hijau (5 case di atas).
-- [ ] `internal/applog/applog.go` + test hijau (5 case di atas).
-- [ ] `internal/logger/jsonl.go` pakai `paths.LogsDir()` + `redact.Error()`; existing test hijau.
-- [ ] `cmd/dbsync/main.go` panggil `applog.Init()` paling awal.
-- [ ] Per-package `log.go` ada di paket eksisting (lihat Step 6).
-- [ ] `go test ./...` hijau.
-- [ ] `go build -o dbsync ./cmd/dbsync` sukses.
-- [ ] Smoke run: `./dbsync --help` tidak panic, file `./logs/dbsync.log` muncul, tidak ada line di stdout/stderr (kecuali pre-init failure).
-- [ ] Manual: `DBSYNC_LOG_LEVEL=debug ./dbsync --help` → file log mengandung level=DEBUG line.
+- [x] `context7` MCP di-query SEBELUM coding (catat di PR description).
+- [x] `internal/paths/paths.go` + test hijau.
+- [x] `internal/redact/error.go` + test hijau (5 case di atas).
+- [x] `internal/applog/applog.go` + test hijau (5 case di atas).
+- [x] `internal/logger/jsonl.go` pakai `paths.LogsDir()` + `redact.Error()`; existing test hijau.
+- [x] `cmd/dbsync/main.go` panggil `applog.Init()` paling awal.
+- [x] Per-package `log.go` ada di paket eksisting (lihat Step 6).
+- [x] `go test ./...` hijau.
+- [x] `go build -o dbsync ./cmd/dbsync` sukses.
+- [x] Smoke run: `./dbsync --help` tidak panic, file `./logs/dbsync.log` muncul, tidak ada line di stdout/stderr (kecuali pre-init failure).
+- [x] Manual: `DBSYNC_LOG_LEVEL=debug ./dbsync --help` → file log mengandung level=DEBUG line.
 
 ---
 
 ## Manual QA
 
-- [ ] Jalankan `./dbsync` (TUI) → cek `./logs/dbsync.log` muncul, terminal tidak ada noise stdout.
-- [ ] Set permission `chmod 000 logs/` lalu run → exit 1 dengan stderr `log init failed: ...` (fail-fast).
-- [ ] Generate >10MB log (loop debug log via fake test) → file rotate ke `dbsync.log.<timestamp>.gz`.
-- [ ] Test concurrent: jalankan `./dbsync run ...` di 2 shell paralel → cek `dbsync.log` tidak corrupt (semua line valid logfmt).
+- [x] Jalankan `./dbsync` (TUI) → cek `./logs/dbsync.log` muncul, terminal tidak ada noise stdout.
+- [x] Set permission `chmod 000 logs/` lalu run → exit 1 dengan stderr `log init failed: ...` (fail-fast).
+- [x] Generate >10MB log (loop debug log via fake test) → file rotate ke `dbsync.log.<timestamp>.gz`.
+- [x] Test concurrent: jalankan `./dbsync run ...` di 2 shell paralel → cek `dbsync.log` tidak corrupt (semua line valid logfmt).
 
 ---
 

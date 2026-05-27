@@ -11,10 +11,12 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/user/dbsync/internal/applog"
 	"github.com/user/dbsync/internal/cli"
 	"github.com/user/dbsync/internal/config"
 	"github.com/user/dbsync/internal/storage"
@@ -25,6 +27,13 @@ import (
 var version = "v1.0.0-dev"
 
 func main() {
+	closer, err := applog.Init()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "log init failed: %v\n", err)
+		os.Exit(1)
+	}
+	defer closer.Close()
+
 	// If version is requested specifically
 	if len(os.Args) > 1 && (os.Args[1] == "version" || os.Args[1] == "--version" || os.Args[1] == "-v") {
 		fmt.Printf("dbsync %s\n", version)
@@ -38,7 +47,10 @@ func main() {
 	}
 
 	// Execute CLI (Cobra)
-	cli.Execute()
+	if err := cli.Execute(); err != nil {
+		slog.Error("command failed", "err", err)
+		os.Exit(1)
+	}
 }
 
 func runTUI() {

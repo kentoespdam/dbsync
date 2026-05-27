@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/user/dbsync/internal/crypto"
+	"github.com/user/dbsync/internal/paths"
 	"golang.org/x/term"
 )
 
@@ -111,15 +112,11 @@ var (
 // portableDir returns the directory next to the running binary.
 // Falls back to CWD when the executable path cannot be resolved (e.g. `go run`).
 func portableDir() (string, error) {
-	exe, err := os.Executable()
+	dir, err := paths.AppDir()
 	if err != nil {
 		return os.Getwd()
 	}
-	resolved, err := filepath.EvalSymlinks(exe)
-	if err != nil {
-		resolved = exe
-	}
-	return filepath.Dir(resolved), nil
+	return dir, nil
 }
 
 // DBPath returns the path to the SQLite database file, co-located with the binary.
