@@ -67,7 +67,7 @@ func TestMySQLOps(t *testing.T) {
 		}
 
 		t.Run("FirstBatch", func(t *testing.T) {
-			rows, nextPK, err := SelectBatch(ctx, db, "testdb", "items", []string{"id"}, nil, 3)
+			rows, nextPK, err := SelectBatch(ctx, db, "testdb", "items", nil, []string{"id"}, nil, 3)
 			assert.NoError(t, err)
 			assert.Len(t, rows, 3)
 			assert.Equal(t, int64(1), rows[0]["id"])
@@ -76,12 +76,21 @@ func TestMySQLOps(t *testing.T) {
 		})
 
 		t.Run("SecondBatch", func(t *testing.T) {
-			rows, nextPK, err := SelectBatch(ctx, db, "testdb", "items", []string{"id"}, []any{int64(3)}, 3)
+			rows, nextPK, err := SelectBatch(ctx, db, "testdb", "items", nil, []string{"id"}, []any{int64(3)}, 3)
 			assert.NoError(t, err)
 			assert.Len(t, rows, 2)
 			assert.Equal(t, int64(4), rows[0]["id"])
 			assert.Equal(t, int64(5), rows[1]["id"])
 			assert.Equal(t, []any{int64(5)}, nextPK)
+		})
+
+		t.Run("SpecificCols", func(t *testing.T) {
+			rows, _, err := SelectBatch(ctx, db, "testdb", "items", []string{"id", "name"}, []string{"id"}, nil, 1)
+			assert.NoError(t, err)
+			assert.Len(t, rows, 1)
+			assert.Contains(t, rows[0], "id")
+			assert.Contains(t, rows[0], "name")
+			assert.NotContains(t, rows[0], "description")
 		})
 
 		t.Run("CompositePK", func(t *testing.T) {
@@ -94,7 +103,7 @@ func TestMySQLOps(t *testing.T) {
 			}
 
 			// First batch
-			rows, nextPK, err := SelectBatch(ctx, db, "testdb", "composite_items", []string{"shop_id", "item_id"}, nil, 2)
+			rows, nextPK, err := SelectBatch(ctx, db, "testdb", "composite_items", nil, []string{"shop_id", "item_id"}, nil, 2)
 			assert.NoError(t, err)
 			assert.Len(t, rows, 2)
 			assert.Equal(t, int64(1), rows[0]["shop_id"])
@@ -104,7 +113,7 @@ func TestMySQLOps(t *testing.T) {
 			assert.Equal(t, []any{int64(1), int64(2)}, nextPK)
 
 			// Next batch from (1, 2)
-			rows, nextPK, err = SelectBatch(ctx, db, "testdb", "composite_items", []string{"shop_id", "item_id"}, nextPK, 2)
+			rows, nextPK, err = SelectBatch(ctx, db, "testdb", "composite_items", nil, []string{"shop_id", "item_id"}, nextPK, 2)
 			assert.NoError(t, err)
 			assert.Len(t, rows, 2)
 			assert.Equal(t, int64(1), rows[0]["shop_id"])

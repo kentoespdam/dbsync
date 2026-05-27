@@ -31,7 +31,7 @@ func CountRows(ctx context.Context, db *sql.DB, schema, table string) (int, erro
 }
 
 // SelectBatch fetches a batch of rows from a table using primary key-based pagination.
-func SelectBatch(ctx context.Context, db *sql.DB, schema, table string, pkCols []string, lastPK []any, limit int) (rows []Row, nextPK []any, err error) {
+func SelectBatch(ctx context.Context, db *sql.DB, schema, table string, selectCols []string, pkCols []string, lastPK []any, limit int) (rows []Row, nextPK []any, err error) {
 	if len(pkCols) == 0 {
 		return nil, nil, fmt.Errorf("pkCols cannot be empty")
 	}
@@ -42,6 +42,15 @@ func SelectBatch(ctx context.Context, db *sql.DB, schema, table string, pkCols [
 	quotedPKCols := make([]string, len(pkCols))
 	for i, col := range pkCols {
 		quotedPKCols[i] = fmt.Sprintf("`%s`", strings.ReplaceAll(col, "`", "``"))
+	}
+
+	selectClause := "*"
+	if len(selectCols) > 0 {
+		quotedSelectCols := make([]string, len(selectCols))
+		for i, col := range selectCols {
+			quotedSelectCols[i] = fmt.Sprintf("`%s`", strings.ReplaceAll(col, "`", "``"))
+		}
+		selectClause = strings.Join(quotedSelectCols, ", ")
 	}
 
 	var whereClause string
@@ -64,8 +73,8 @@ func SelectBatch(ctx context.Context, db *sql.DB, schema, table string, pkCols [
 	}
 
 	orderBy := strings.Join(quotedPKCols, ", ")
-	query := fmt.Sprintf("SELECT * FROM %s.%s%s ORDER BY %s LIMIT %d",
-		quotedSchema, quotedTable, whereClause, orderBy, limit)
+	query := fmt.Sprintf("SELECT %s FROM %s.%s%s ORDER BY %s LIMIT %d",
+		selectClause, quotedSchema, quotedTable, whereClause, orderBy, limit)
 
 	dbRows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -133,19 +142,18 @@ func Upsert(ctx context.Context, tx *sql.Tx, schema, table string, pkCols []stri
 	}
 
 	// Build placeholders (?, ?, ...), (?, ?, ...), ...
+	rowPlaceholders := "(" + strings.Repeat("?, ", len(mappings)-1) + "?)"
 	valuePlaceholders := make([]string, len(rows))
 	args := make([]any, 0, len(rows)*len(mappings))
 	for i, row := range rows {
-		placeholders := make([]string, len(mappings))
-		for j, m := range mappings {
+		for _, m := range mappings {
 			val, err := m.ValueFn(row)
 			if err != nil {
 				return 0, fmt.Errorf("resolve value for row %d, col %s: %w", i, m.DestColumn, err)
 			}
 			args = append(args, val)
-			placeholders[j] = "?"
 		}
-		valuePlaceholders[i] = "(" + strings.Join(placeholders, ", ") + ")"
+		valuePlaceholders[i] = rowPlaceholders
 	}
 
 	// ON DUPLICATE KEY UPDATE col1 = VALUES(col1), ...

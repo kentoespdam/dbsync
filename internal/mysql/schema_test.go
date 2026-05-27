@@ -44,6 +44,8 @@ func TestMySQLSchema(t *testing.T) {
 			id INT AUTO_INCREMENT PRIMARY KEY,
 			username VARCHAR(255) NOT NULL,
 			email VARCHAR(255) NULL,
+			is_active TINYINT(1) DEFAULT 1,
+			status ENUM('pending', 'active', 'suspended') DEFAULT 'pending',
 			UNIQUE(username)
 		)
 	`)
@@ -95,18 +97,26 @@ func TestMySQLSchema(t *testing.T) {
 	t.Run("DescribeColumns", func(t *testing.T) {
 		cols, err := DescribeColumns(ctx, db, "testdb", "users")
 		assert.NoError(t, err)
-		require.Len(t, cols, 3)
+		require.Len(t, cols, 5)
 
 		assert.Equal(t, "id", cols[0].Name)
 		assert.Equal(t, "int", cols[0].DataType)
+		assert.Contains(t, cols[0].ColumnType, "int")
 		assert.False(t, cols[0].IsNullable)
 		assert.Equal(t, "PRI", cols[0].ColumnKey)
 
 		assert.Equal(t, "username", cols[1].Name)
+		assert.Contains(t, cols[1].ColumnType, "varchar(255)")
 		assert.False(t, cols[1].IsNullable)
 		assert.Equal(t, "UNI", cols[1].ColumnKey)
 
 		assert.Equal(t, "email", cols[2].Name)
 		assert.True(t, cols[2].IsNullable)
+
+		assert.Equal(t, "is_active", cols[3].Name)
+		assert.True(t, cols[3].IsBool())
+
+		assert.Equal(t, "status", cols[4].Name)
+		assert.Equal(t, []string{"pending", "active", "suspended"}, cols[4].EnumValues())
 	})
 }

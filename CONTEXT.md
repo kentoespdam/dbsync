@@ -10,7 +10,7 @@ Dua mode, satu binary, satu SQLite:
 - **TUI** `./dbsync` — setup koneksi, mapping, sync interaktif.
 - **CLI** `./dbsync run --connection=X --table=Y` — cron. Exit 0/1/2.
 
-Status: **v1, scaffolding phase** (belum end-to-end).
+Status: **v1, UI overhaul phase** (bd-09a/b complete).
 
 ## Why (5 pain points)
 1. Tidak ada riwayat sync.
@@ -78,7 +78,7 @@ CLI: 002→003→004→005. TUI: 006→007(butuh 003)→008(butuh 005+007).
 Critical path: 001→002→003→004→005→008.
 SSoT dependency = Beads (`bd ready`), bukan markdown.
 
-Snapshot 2026-05-26: 1 `ready-for-agent` (`dbsync-61b` / GH #1), 7 `needs-triage`.
+Snapshot 2026-05-27: `bd-09` series completed. Issue 009 finalized.
 
 ## Coding rules
 - Sebelum edit symbol: `gitnexus_impact({target, direction:"upstream"})`.
@@ -97,3 +97,4 @@ Snapshot 2026-05-26: 1 `ready-for-agent` (`dbsync-61b` / GH #1), 7 `needs-triage
 | GitHub mirror | https://github.com/kentoespdam/dbsync/issues |
 
 *Last updated: 2026-05-26.*
+*

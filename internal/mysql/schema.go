@@ -4,14 +4,38 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"regexp"
+	"strings"
 )
 
 // Column represents metadata for a table column.
 type Column struct {
 	Name       string
 	DataType   string // e.g. "varchar", "int", "bigint"
+	ColumnType string // e.g. "varchar(255)", "tinyint(1)", "enum('a','b')"
 	IsNullable bool
 	ColumnKey  string // "PRI", "UNI", "MUL", ""
+}
+
+// IsBool returns true if the column is a boolean (tinyint(1) in MySQL).
+func (c Column) IsBool() bool {
+	return strings.EqualFold(c.ColumnType, "tinyint(1)")
+}
+
+var enumRegex = regexp.MustCompile(`'([^']*)'`)
+
+// EnumValues returns the allowed values for an ENUM column.
+func (c Column) EnumValues() []string {
+	if !strings.HasPrefix(strings.ToLower(c.ColumnType), "enum(") {
+		return nil
+	}
+
+	matches := enumRegex.FindAllStringSubmatch(c.ColumnType, -1)
+	values := make([]string, 0, len(matches))
+	for _, m := range matches {
+		values = append(values, m[1])
+	}
+	return values
 }
 
 // DetectPK returns the primary key column names in their ordinal order.
@@ -47,7 +71,7 @@ func DetectPK(ctx context.Context, db *sql.DB, schema, table string) ([]string, 
 // DescribeColumns returns metadata for all columns in a table.
 func DescribeColumns(ctx context.Context, db *sql.DB, schema, table string) ([]Column, error) {
 	query := `
-		SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_KEY
+		SELECT COLUMN_NAME, DATA_TYPE, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY
 		FROM INFORMATION_SCHEMA.COLUMNS
 		WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
 		ORDER BY ORDINAL_POSITION
@@ -62,7 +86,7 @@ func DescribeColumns(ctx context.Context, db *sql.DB, schema, table string) ([]C
 	for rows.Next() {
 		var col Column
 		var isNullable string
-		if err := rows.Scan(&col.Name, &col.DataType, &isNullable, &col.ColumnKey); err != nil {
+		if err := rows.Scan(&col.Name, &col.DataType, &col.ColumnType, &isNullable, &col.ColumnKey); err != nil {
 			return nil, fmt.Errorf("scan column: %w", err)
 		}
 		col.IsNullable = (isNullable == "YES")

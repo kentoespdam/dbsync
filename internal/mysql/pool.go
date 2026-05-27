@@ -21,7 +21,8 @@ type Config struct {
 
 // Pool wraps the *sql.DB connection pool.
 type Pool struct {
-	db *sql.DB
+	db     *sql.DB
+	config Config
 }
 
 // Open initializes a MySQL connection pool with the given configuration.
@@ -49,7 +50,12 @@ func Open(cfg Config) (*Pool, error) {
 		return nil, redactError(err, cfg.Password)
 	}
 
-	return &Pool{db: db}, nil
+	return &Pool{db: db, config: cfg}, nil
+}
+
+// Config returns the configuration used to open the pool.
+func (p *Pool) Config() Config {
+	return p.config
 }
 
 // Close closes the connection pool.
