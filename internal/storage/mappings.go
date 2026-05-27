@@ -35,20 +35,23 @@ func AutoMap(connID int64, table string, sourceCols, destCols []mysql.Column) Au
 	usedSource := make(map[string]bool)
 
 	for _, dc := range destCols {
+		m := Mapping{
+			ConnectionID: connID,
+			TableName:    table,
+			DestColumn:   dc.Name,
+			SourceColumn: sql.NullString{Valid: false},
+			DefaultValue: sql.NullString{Valid: false},
+		}
+
 		if sc, ok := sourceMap[dc.Name]; ok {
-			res.Mappings = append(res.Mappings, Mapping{
-				ConnectionID: connID,
-				TableName:    table,
-				SourceColumn: sql.NullString{String: sc.Name, Valid: true},
-				DestColumn:   dc.Name,
-				DefaultValue: sql.NullString{Valid: false},
-			})
+			m.SourceColumn = sql.NullString{String: sc.Name, Valid: true}
 			usedSource[sc.Name] = true
 		} else {
 			if !dc.IsNullable {
 				res.Warnings = append(res.Warnings, fmt.Sprintf("dest column %s is NOT NULL but has no match in source", dc.Name))
 			}
 		}
+		res.Mappings = append(res.Mappings, m)
 	}
 
 	for _, sc := range sourceCols {
@@ -103,7 +106,7 @@ func (r *MappingRepo) BulkInsert(ctx context.Context, ms []Mapping) error {
 
 	for _, m := range ms {
 		if !m.SourceColumn.Valid && !m.DefaultValue.Valid {
-			return fmt.Errorf("mapping for %s must have at least a source column or a default value", m.DestColumn)
+			continue
 		}
 		_, err := stmt.ExecContext(ctx, m.ConnectionID, m.TableName, m.SourceColumn, m.DestColumn, m.DefaultValue)
 		if err != nil {

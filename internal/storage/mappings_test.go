@@ -76,6 +76,12 @@ func TestMappingRepo(t *testing.T) {
 				SourceColumn: sql.NullString{String: "s2", Valid: true},
 				DestColumn:   "d2",
 			},
+			{
+				ConnectionID: connID,
+				TableName:    "products",
+				DestColumn:   "skipped",
+				// invalid mapping
+			},
 		}
 		err := mappingRepo.BulkInsert(ctx, ms)
 		if err != nil {
@@ -87,7 +93,7 @@ func TestMappingRepo(t *testing.T) {
 			t.Fatalf("ListByTable failed: %v", err)
 		}
 		if len(mappings) != 2 {
-			t.Fatalf("Expected 2 mappings, got %d", len(mappings))
+			t.Fatalf("Expected 2 mappings (1 skipped), got %d", len(mappings))
 		}
 	})
 
@@ -214,14 +220,38 @@ func TestAutoMap(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			res := AutoMap(connID, table, tt.sourceCols, tt.destCols)
-			if len(res.Mappings) != tt.wantMap {
-				t.Errorf("got %d mappings, want %d", len(res.Mappings), tt.wantMap)
+			if len(res.Mappings) != len(tt.destCols) {
+				t.Errorf("got %d mappings, want %d (len(destCols))", len(res.Mappings), len(tt.destCols))
 			}
 			if len(res.Warnings) != tt.wantWarn {
 				t.Errorf("got %d warnings, want %d", len(res.Warnings), tt.wantWarn)
 			}
 			if len(res.UnmappedSource) != tt.wantUnmap {
 				t.Errorf("got %d unmapped source, want %d", len(res.UnmappedSource), tt.wantUnmap)
+			}
+
+			// Verify synthetic mappings
+			for i, m := range res.Mappings {
+				dc := tt.destCols[i]
+				if m.DestColumn != dc.Name {
+					t.Errorf("Mapping %d DestColumn = %s, want %s", i, m.DestColumn, dc.Name)
+				}
+				// If no match in source, it should be invalid
+				hasMatch := false
+				for _, sc := range tt.sourceCols {
+					if sc.Name == dc.Name {
+						hasMatch = true
+						break
+					}
+				}
+				if !hasMatch {
+					if m.SourceColumn.Valid {
+						t.Errorf("Mapping %d (no match) SourceColumn.Valid is true", i)
+					}
+					if m.DefaultValue.Valid {
+						t.Errorf("Mapping %d (no match) DefaultValue.Valid is true", i)
+					}
+				}
 			}
 		})
 	}
