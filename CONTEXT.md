@@ -86,6 +86,13 @@ Snapshot 2026-05-27: `bd-09` series completed. Issue 009 finalized.
 - Sebelum pakai lib X: query `context7`.
 - Jangan `ls -R` / grep buta — pakai `gitnexus_query` / `mcp_graphify_*`.
 
+## Glossary
+
+- **Test Connection** — dua jalur, semantik beda:
+  1. *Form test* (`connFormModel.testSource/testDest` di `internal/tui/conn_form.go`) — validasi credential yang user **sedang ketik** di form, dipicu saat tekan Enter di field terakhir. Sukses → langsung lanjut save. Gagal → prompt "Save anyway? (y/N)". Tidak menampilkan layar hasil.
+  2. *List test* (`connTestModel.testAll` di `internal/tui/conn_check.go`) — re-test koneksi **yang sudah tersimpan**, password didekripsi dari SQLite. Dipicu dari list connection dengan tombol `t`. Tampilkan status `✓ OK` / `✗ <error>` untuk Source dan Dest, lalu tekan key apa pun untuk balik. Error yang ditampilkan **harus** melewati `redact.Error` (lihat Logging dua-jalur).
+  > Aturan Bubble Tea: `tea.Cmd` jalan di goroutine — **jangan mutate model di Cmd**. Carry hasil di message payload, lalu `Update` yang menugaskan ke field model.
+
 ## Pointer
 | Mau tahu | Buka |
 |---|---|

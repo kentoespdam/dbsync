@@ -2,10 +2,12 @@ package tui
 
 import (
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/charmbracelet/bubbles/spinner"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/user/dbsync/internal/crypto"
 	"github.com/user/dbsync/internal/mysql"
+	"github.com/user/dbsync/internal/redact"
 	"github.com/user/dbsync/internal/storage"
 )
 
@@ -31,49 +33,39 @@ func (m connTestModel) Init() tea.Cmd {
 	return tea.Batch(m.spinner.Tick, m.testAll)
 }
 
+// testAll runs in a tea.Cmd goroutine. It must NOT mutate m (value receiver);
+// instead it returns testDoneMsg carrying the results, which Update applies.
 func (m connTestModel) testAll() tea.Msg {
-	// Test Source
-	srcPass, err := crypto.Decrypt(m.conn.SourcePassword, m.masterKey)
-	if err != nil {
-		m.srcStatus = "✗ Decryption failed"
-	} else {
-		_, err = mysql.Open(mysql.Config{
-			Host:     m.conn.SourceHost,
-			Port:     m.conn.SourcePort,
-			User:     m.conn.SourceUser,
-			Password: string(srcPass),
-			DBName:   m.conn.SourceDB,
-		})
-		if err != nil {
-			m.srcStatus = fmt.Sprintf("✗ %v", err)
-		} else {
-			m.srcStatus = "✓ OK"
-		}
+	return testDoneMsg{
+		srcStatus: probe(m.conn.SourcePassword, m.masterKey, mysql.Config{
+			Host: m.conn.SourceHost, Port: m.conn.SourcePort,
+			User: m.conn.SourceUser, DBName: m.conn.SourceDB,
+		}),
+		dstStatus: probe(m.conn.DestPassword, m.masterKey, mysql.Config{
+			Host: m.conn.DestHost, Port: m.conn.DestPort,
+			User: m.conn.DestUser, DBName: m.conn.DestDB,
+		}),
 	}
-
-	// Test Dest
-	dstPass, err := crypto.Decrypt(m.conn.DestPassword, m.masterKey)
-	if err != nil {
-		m.dstStatus = "✗ Decryption failed"
-	} else {
-		_, err = mysql.Open(mysql.Config{
-			Host:     m.conn.DestHost,
-			Port:     m.conn.DestPort,
-			User:     m.conn.DestUser,
-			Password: string(dstPass),
-			DBName:   m.conn.DestDB,
-		})
-		if err != nil {
-			m.dstStatus = fmt.Sprintf("✗ %v", err)
-		} else {
-			m.dstStatus = "✓ OK"
-		}
-	}
-
-	return testDoneMsg{}
 }
 
-type testDoneMsg struct{}
+// probe decrypts pw, opens a MySQL pool with cfg, and returns a user-visible
+// status string. Errors are redacted (quoted values stripped) before display.
+func probe(encPw string, masterKey []byte, cfg mysql.Config) string {
+	pw, err := crypto.Decrypt(encPw, masterKey)
+	if err != nil {
+		return fmt.Sprintf("✗ Decryption failed: %s", redact.Error(err))
+	}
+	cfg.Password = string(pw)
+	if _, err := mysql.Open(cfg); err != nil {
+		return fmt.Sprintf("✗ %s", redact.Error(err))
+	}
+	return "✓ OK"
+}
+
+type testDoneMsg struct {
+	srcStatus string
+	dstStatus string
+}
 
 func (m connTestModel) Update(msg tea.Msg) (connTestModel, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -83,6 +75,8 @@ func (m connTestModel) Update(msg tea.Msg) (connTestModel, tea.Cmd) {
 		return m, cmd
 	case testDoneMsg:
 		m.loading = false
+		m.srcStatus = msg.srcStatus
+		m.dstStatus = msg.dstStatus
 		return m, nil
 	}
 	return m, nil
