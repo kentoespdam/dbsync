@@ -36,7 +36,10 @@ internal/
 ├── storage/        SQLite repo + migration    ✅ (partial)
 ├── mysql/          pool + INFO_SCHEMA + upsert  ⟵ TBD
 ├── engine/         sync orchestrator            ⟵ TBD
-├── logger/         JSONL log + redaction        ⟵ TBD
+├── applog/         slog + lumberjack (app log)  ⟵ TBD
+├── logger/         JSONL log per-sync           ⟵ TBD (relocate path)
+├── redact/         shared error redaction       ⟵ TBD
+├── paths/          binary-relative path helper  ⟵ TBD
 ├── cli/            cobra handlers              ✅ skeleton
 └── tui/            bubbletea                    ⟵ TBD
 docs/{PRD-v1, ARCHITECTURE, EXECUTION-ORDER}.md + issues/001-008.md
@@ -44,6 +47,11 @@ docs/{PRD-v1, ARCHITECTURE, EXECUTION-ORDER}.md + issues/001-008.md
 
 ## Stack
 Go 1.25 · bubbletea+bubbles+lipgloss · cobra · go-sql-driver/mysql · modernc.org/sqlite · x/crypto/scrypt · x/term.
+
+## Logging dua-jalur
+- **`applog`** (slog → `<exeDir>/logs/dbsync.log`, rotated via lumberjack) untuk debug & error review aplikasi sehari-hari. Format text/logfmt, `AddSource:true`, level via `DBSYNC_LOG_LEVEL`. File-only writer (TUI haram stdout).
+- **`logger`** (JSONL → `<exeDir>/logs/sync-<ts>-<conn>-<table>.jsonl`) tetap dipakai untuk error journal per-sync (row/batch error). Entry shape & filename **tidak berubah**; hanya direktori output yang pindah dari `~/.local/share/...` ke binary-relative.
+- Keduanya pakai **`redact`** package untuk strip nilai sensitif (quoted values) di pesan error.
 
 ## Security (ringkas)
 - AES-256-GCM, nonce 12-byte random prepended.

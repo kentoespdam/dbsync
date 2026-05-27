@@ -31,8 +31,9 @@ arsitektur manusia di tengah). Semua di-label `needs-triage`.
 | [006](006-tui-shell-connection-management.md) | TUI shell + connection management | dbsync-45p | [#6](https://github.com/kentoespdam/dbsync/issues/6) | 001 | 1, 3, 4, 5, 6 |
 | [007](007-tui-table-picker-mapping-editor.md) | TUI table picker + mapping editor | dbsync-nvt | [#7](https://github.com/kentoespdam/dbsync/issues/7) | 003, 006 | 7, 8, 9, 10, 11 |
 | [008](008-tui-run-screen-history-viewer.md) | TUI run / history / checkpoint screens | dbsync-0mr | [#8](https://github.com/kentoespdam/dbsync/issues/8) | 005, 007 | 12, 13, 20, 23 |
+| [010](010-application-logging.md) | Application logging infrastructure (applog + paths + redact) | dbsync-mga | [#13](https://github.com/kentoespdam/dbsync/issues/13) | — | logging |
 
-Total: 8 issues, semua user story dari PRD ter-cover.
+Total: 8 issues v1 + 1 cross-cutting (010 logging). Issue 009 (mapping editor UX) tracked separately via `bd-09a..d`.
 
 ## Instruksi umum untuk agent
 
