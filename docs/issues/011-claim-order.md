@@ -13,18 +13,19 @@
 4. **Patuhi `CLAUDE.md`** project rules: DRY comments, max 120 baris per file/function, `context7` wajib untuk lib eksternal (GoReleaser v2 schema).
 5. **GoReleaser v2 only.** Syntax berubah dari v1 — jangan pakai `format:` (singular, deprecated), pakai `formats:` (plural).
 6. **`cmd/dbsync/main.go:27` jangan diubah.** `var version = "v1.0.0-dev"` adalah intentional dev fallback, di-override via ldflags saat release.
-7. **Workflow per slice:**
+7. **Workflow per slice** (contoh untuk S1 = `dbsync-28b`, GH `#19`):
    ```
-   bd update <bd-id> --claim
-   git checkout -b feat/<bd-id>-<slug>
+   bd update dbsync-28b --claim
+   git checkout -b feat/dbsync-28b-gitignore-dist
    # … kerja, commit kecil-kecil …
    make release-check   # mulai dari S3 onward
    go test ./...
    go build -o dbsync ./cmd/dbsync
-   git push -u origin feat/<bd-id>-<slug>
-   gh pr create --base main --title "<bd-id>: …" --body "Closes #<gh-num>. Plan: docs/issues/011-cross-platform-release.md"
+   git push -u origin feat/dbsync-28b-gitignore-dist
+   gh pr create --base main --title "dbsync-28b: chore: ignore dist/ directory" \
+     --body "Closes #19. Plan: docs/issues/011-cross-platform-release.md"
    # … review + merge …
-   bd close <bd-id>
+   bd close dbsync-28b
    ```
 8. **Session close MANDATORY** (lihat `CLAUDE.md` "Session Completion"): `git pull --rebase && bd dolt push && git push && git status`.
 
@@ -52,10 +53,10 @@ F5 (Authenticode)         — depends on S3, HITL, gated by user complaints
 
 ---
 
-## ☑ Step 1 — S1 · `chore: ignore dist/ directory`
+## ☑ Step 1 — S1 · `chore: ignore dist/ directory` ✅ DONE
 
-**bd:** `dbsync-XXX` (di-update setelah `bd create` jalan)
-**GH:** `#XX`
+**bd:** `dbsync-28b`
+**GH:** [`#19`](https://github.com/kentoespdam/dbsync/issues/19)
 **Type:** AFK
 **Blocks:** S2
 
@@ -65,15 +66,15 @@ Append `dist/` ke `.gitignore`. Itu saja. GoReleaser output + `make build-linux/
 
 ### Acceptance
 
-- [ ] `.gitignore` punya baris `dist/`.
-- [ ] `mkdir -p dist && touch dist/test && git status` tidak menampilkan `dist/` sebagai untracked.
+- [x] `.gitignore` punya baris `dist/`.
+- [x] `mkdir -p dist && touch dist/test && git status` tidak menampilkan `dist/` sebagai untracked.
 
 ---
 
 ## ☑ Step 2 — S2 · `build: add cross-compile + version-injection Makefile targets`
 
-**bd:** `dbsync-XXX`
-**GH:** `#XX`
+**bd:** `dbsync-2bb`
+**GH:** [`#18`](https://github.com/kentoespdam/dbsync/issues/18)
 **Type:** AFK
 **Blocked by:** S1
 **Blocks:** S3
@@ -94,8 +95,8 @@ Tambah variabel `VERSION`/`LDFLAGS`/`GOFLAGS` di Makefile (lihat plan §"Makefil
 
 ## ☑ Step 3 — S3 · `build: add GoReleaser config + tag-triggered release workflow`
 
-**bd:** `dbsync-XXX`
-**GH:** `#XX`
+**bd:** `dbsync-w5a`
+**GH:** [`#17`](https://github.com/kentoespdam/dbsync/issues/17)
 **Type:** AFK
 **Blocked by:** S2
 **Blocks:** S4, S6
@@ -118,8 +119,8 @@ Buat `.goreleaser.yml` dan `.github/workflows/release.yml` persis seperti di pla
 
 ## ☑ Step 4 — S4 · `docs: add ADR-0002 + README installation/Windows/Releases + CONTEXT.md release section`
 
-**bd:** `dbsync-XXX`
-**GH:** `#XX`
+**bd:** `dbsync-9ps`
+**GH:** [`#16`](https://github.com/kentoespdam/dbsync/issues/16)
 **Type:** AFK
 **Blocked by:** S3
 **Blocks:** S6
@@ -141,8 +142,8 @@ Buat `docs/adr/0002-cross-platform-binary-distribution.md` (style ADR-0001). Upd
 
 ## ☑ Step 5 — S5 · `decision: choose project LICENSE before first public release` 🧑‍⚖️ HITL
 
-**bd:** `dbsync-XXX`
-**GH:** `#XX`
+**bd:** `dbsync-kuj`
+**GH:** [`#15`](https://github.com/kentoespdam/dbsync/issues/15)
 **Type:** HITL (butuh keputusan dari project owner)
 **Blocked by:** —
 **Blocks:** S6
@@ -161,8 +162,8 @@ User/maintainer pilih license (rekomendasi: MIT atau Apache-2.0). Tambah `LICENS
 
 ## ☑ Step 6 — S6 · `release: cut v1.0.0 + smoke-test Windows binary manually` 🧑‍🔬 HITL
 
-**bd:** `dbsync-XXX`
-**GH:** `#XX`
+**bd:** `dbsync-1kc`
+**GH:** [`#14`](https://github.com/kentoespdam/dbsync/issues/14)
 **Type:** HITL (butuh maintainer di mesin Windows real)
 **Blocked by:** S3, S4, S5
 
@@ -189,23 +190,23 @@ Tag `v1.0.0` di main, push, tunggu CI selesai, download Windows ZIP, extract ke 
 
 ### F1 — `chore: rename module path github.com/user/dbsync → github.com/kentoespdam/dbsync`
 
-**Type:** AFK · **Blocks:** — · `bd` issue: `dbsync-XXX`. Kosmetik tapi best practice. `go mod edit -module` + sed semua import + verify build.
+**Type:** AFK · **Blocks:** — · `bd` issue: [`dbsync-da2`](https://github.com/kentoespdam/dbsync/issues/22). Kosmetik tapi best practice. `go mod edit -module` + sed semua import + verify build.
 
 ### F2 — `test: add MySQL integration test workflow (non-gating)`
 
-**Type:** AFK · **Blocked by:** S3 · `bd` issue: `dbsync-XXX`. Closes ADR-0002 trade-off #2. Spin up MySQL service container di GA workflow terpisah dari release; trigger di push main / PR. Tidak gate release.
+**Type:** AFK · **Blocked by:** S3 · `bd` issue: [`dbsync-55p`](https://github.com/kentoespdam/dbsync/issues/21). Closes ADR-0002 trade-off #2. Spin up MySQL service container di GA workflow terpisah dari release; trigger di push main / PR. Tidak gate release.
 
 ### F3 — `release: add windows-latest smoke-test job for PRs touching internal/tui/`
 
-**Type:** AFK · **Blocked by:** S3 · `bd` issue: `dbsync-XXX`. Closes ADR-0002 trade-off #3. Conditional GA job (paths filter) untuk catch bubbletea Windows quirks.
+**Type:** AFK · **Blocked by:** S3 · `bd` issue: [`dbsync-1ov`](https://github.com/kentoespdam/dbsync/issues/20). Closes ADR-0002 trade-off #3. Conditional GA job (paths filter) untuk catch bubbletea Windows quirks.
 
 ### F4 — `release: extend goreleaser matrix with linux/arm64 + darwin/{amd64,arm64} when demand arrives`
 
-**Type:** AFK (speculative) · **Blocked by:** S3 · `bd` issue: `dbsync-XXX`. ADR-0002 alternative #2-#3. Trivial — 2 line di `.goreleaser.yml`. File now, defer execution.
+**Type:** AFK (speculative) · **Blocked by:** S3 · `bd` issue: [`dbsync-5tw`](https://github.com/kentoespdam/dbsync/issues/24). ADR-0002 alternative #2-#3. Trivial — 2 line di `.goreleaser.yml`. File now, defer execution.
 
 ### F5 — `release: evaluate Authenticode signing if Windows SmartScreen complaints accumulate` 🧑‍⚖️ HITL
 
-**Type:** HITL · **Blocked by:** S3 · `bd` issue: `dbsync-XXX`. ADR-0002 trade-off #1. Track complaint count; revisit kalau >5 user-facing complaint.
+**Type:** HITL · **Blocked by:** S3 · `bd` issue: [`dbsync-1wm`](https://github.com/kentoespdam/dbsync/issues/23). ADR-0002 trade-off #1. Track complaint count; revisit kalau >5 user-facing complaint.
 
 ---
 
@@ -215,8 +216,8 @@ Tag `v1.0.0` di main, push, tunggu CI selesai, download Windows ZIP, extract ke 
 # Find next ready slice
 bd ready
 
-# Claim
-bd update dbsync-XXX --claim
+# Claim (ganti ID sesuai slice, mis. dbsync-28b untuk S1)
+bd update <bd-id> --claim
 
 # Local verify (mulai S3 onward)
 make release-check
@@ -224,7 +225,7 @@ make snapshot
 cd dist && sha256sum -c *_checksums.txt
 
 # Close
-bd close dbsync-XXX
+bd close <bd-id>
 
 # Session close (MANDATORY per CLAUDE.md)
 git pull --rebase && bd dolt push && git push && git status
