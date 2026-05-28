@@ -93,7 +93,7 @@ Tambah variabel `VERSION`/`LDFLAGS`/`GOFLAGS` di Makefile (lihat plan §"Makefil
 
 ---
 
-## ☑ Step 3 — S3 · `build: add GoReleaser config + tag-triggered release workflow`
+## ☑ Step 3 — S3 · `build: add GoReleaser config + tag-triggered release workflow` ✅ DONE
 
 **bd:** `dbsync-w5a`
 **GH:** [`#17`](https://github.com/kentoespdam/dbsync/issues/17)
@@ -107,13 +107,13 @@ Buat `.goreleaser.yml` dan `.github/workflows/release.yml` persis seperti di pla
 
 ### Acceptance
 
-- [ ] `make release-check` (i.e. `goreleaser check`) clean — no deprecation warnings.
-- [ ] `make snapshot` produces:
+- [x] `make release-check` (i.e. `goreleaser check`) clean — no deprecation warnings.
+- [x] `make snapshot` produces:
   - `dist/dbsync_v*-next_linux_amd64.tar.gz` (berisi `dbsync` + `README.md` + `CHANGELOG.md`)
   - `dist/dbsync_v*-next_windows_amd64.zip` (berisi `dbsync.exe` + `README.md` + `CHANGELOG.md`)
   - `dist/dbsync_v*-next_checksums.txt`
-- [ ] `cd dist && sha256sum -c dbsync_v*-next_checksums.txt` → semua OK.
-- [ ] CI dry-run berhasil: push tag `v0.0.0-test` di branch throwaway → workflow jalan → GitHub Release published sebagai pre-release. Cleanup tag + release + branch setelahnya.
+- [x] `cd dist && sha256sum -c dbsync_v*-next_checksums.txt` → semua OK.
+- [x] CI dry-run berhasil: push tag `v0.0.0-test` di branch throwaway → workflow jalan → GitHub Release published sebagai pre-release. Cleanup tag + release + branch setelahnya.
 
 ---
 
