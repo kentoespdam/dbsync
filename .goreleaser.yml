@@ -1,0 +1,78 @@
+version: 2
+
+project_name: dbsync
+
+before:
+  hooks:
+    - go mod tidy
+    - go vet ./...
+
+builds:
+  - id: dbsync
+    main: ./cmd/dbsync
+    binary: dbsync
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+    goarch:
+      - amd64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version=v{{ .Version }}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - id: default
+    ids:
+      - dbsync
+    name_template: "{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    files:
+      - README.md
+      - CHANGELOG.md
+      - LICENSE*
+    wrap_in_directory: false
+
+checksum:
+  name_template: "{{ .ProjectName }}_v{{ .Version }}_checksums.txt"
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  use: git
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^doc:"
+      - "^chore:"
+      - "^test:"
+      - "^ci:"
+      - "Merge pull request"
+      - "Merge branch"
+
+release:
+  github:
+    owner: kentoespdam
+    name: dbsync
+  draft: false
+  prerelease: auto
+  name_template: "dbsync v{{ .Version }}"
+  header: |
+    ## dbsync v{{ .Version }}
+
+    Single-binary MySQL one-way table sync (TUI + CLI), cron-friendly.
+  footer: |
+    ---
+    SHA-256 checksums in `{{ .ProjectName }}_v{{ .Version }}_checksums.txt`.
+    No code signing — Windows users may see SmartScreen warning on first run; see README.
