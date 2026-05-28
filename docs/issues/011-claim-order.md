@@ -160,7 +160,7 @@ User/maintainer pilih license (rekomendasi: MIT atau Apache-2.0). Tambah `LICENS
 
 ---
 
-## ☑ Step 6 — S6 · `release: cut v1.0.0 + smoke-test Windows binary manually` 🧑‍🔬 HITL
+## ☑ Step 6 — S6 · `release: cut v1.0.0 + smoke-test Windows binary manually` 🧑‍🔬 HITL (IN PROGRESS)
 
 **bd:** `dbsync-1kc`
 **GH:** [`#14`](https://github.com/kentoespdam/dbsync/issues/14)
