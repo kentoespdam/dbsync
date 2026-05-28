@@ -117,7 +117,7 @@ Buat `.goreleaser.yml` dan `.github/workflows/release.yml` persis seperti di pla
 
 ---
 
-## ☑ Step 4 — S4 · `docs: add ADR-0002 + README installation/Windows/Releases + CONTEXT.md release section`
+## ☑ Step 4 — S4 · `docs: add ADR-0002 + README installation/Windows/Releases + CONTEXT.md release section` ✅ DONE
 
 **bd:** `dbsync-9ps`
 **GH:** [`#16`](https://github.com/kentoespdam/dbsync/issues/16)
@@ -131,12 +131,12 @@ Buat `docs/adr/0002-cross-platform-binary-distribution.md` (style ADR-0001). Upd
 
 ### Acceptance
 
-- [ ] `docs/adr/0002-*.md` ada, follow style ADR-0001 (Status: Accepted, Date 2026-05-28, sections Context → Decision → Alternatives → Trade-offs → Consequences → References).
-- [ ] README punya `## Installation`, `## Windows usage`, `## Releases` (di GitHub render correctly).
-- [ ] CONTEXT.md §Stack punya line "Release: GoReleaser v2 + GA…".
-- [ ] CONTEXT.md punya new section `## Release artifact` setelah "Logging dua-jalur".
-- [ ] CONTEXT.md Pointer table punya row "Distribusi & rilis".
-- [ ] CONTEXT.md footer di-bump ke `*Last updated: 2026-05-28.*`.
+- [x] `docs/adr/0002-*.md` ada, follow style ADR-0001 (Status: Accepted, Date 2026-05-28, sections Context → Decision → Alternatives → Trade-offs → Consequences → References).
+- [x] README punya `## Installation`, `## Windows usage`, `## Releases` (di GitHub render correctly).
+- [x] CONTEXT.md §Stack punya line "Release: GoReleaser v2 + GA…".
+- [x] CONTEXT.md punya new section `## Release artifact` setelah "Logging dua-jalur".
+- [x] CONTEXT.md Pointer table punya row "Distribusi & rilis".
+- [x] CONTEXT.md footer di-bump ke `*Last updated: 2026-05-28.*`.
 
 ---
 

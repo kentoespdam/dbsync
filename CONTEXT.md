@@ -36,17 +36,24 @@ internal/
 ├── storage/        SQLite repo + migration    ✅ (partial)
 ├── mysql/          pool + INFO_SCHEMA + upsert  ⟵ TBD
 ├── engine/         sync orchestrator            ⟵ TBD
-├── applog/         slog + lumberjack (app log)  ⟵ TBD
-├── logger/         JSONL log per-sync           ⟵ TBD (relocate path)
-├── redact/         shared error redaction       ⟵ TBD
-├── paths/          binary-relative path helper  ⟵ TBD
+├── applog/         slog + lumberjack (app log)  ✅
+├── logger/         JSONL log per-sync           ✅
+├── redact/         shared error redaction       ✅
+├── paths/          binary-relative path helper  ✅
 ├── cli/            cobra handlers              ✅ skeleton
 └── tui/            bubbletea                    ⟵ TBD
 docs/{PRD-v1, ARCHITECTURE, EXECUTION-ORDER}.md + issues/001-008.md
 ```
 
 ## Stack
-Go 1.25 · bubbletea+bubbles+lipgloss · cobra · go-sql-driver/mysql · modernc.org/sqlite · x/crypto/scrypt · x/term.
+Go 1.25 · bubbletea+bubbles+lipgloss · cobra · go-sql-driver/mysql · modernc.org/sqlite · x/crypto/scrypt · x/term · Release: GoReleaser v2 + GitHub Actions.
+
+## Release artifact
+- **Binary:** Single file native (`dbsync` atau `dbsync.exe`), statis (`CGO_ENABLED=0`), strip symbols.
+- **Versi:** Otomatis di-inject via `-ldflags` (`main.version`, `main.commit`, `main.date`) dari Git tag.
+- **Distribusi:** `.tar.gz` (Linux) dan `.zip` (Windows) via GitHub Releases.
+- **Keamanan:** SHA-256 checksums tersedia di setiap rilis.
+- **Windows:** Tidak di-sign (Authenticode). User harus melewati SmartScreen warning via "Run anyway".
 
 ## Logging dua-jalur
 - **`applog`** (slog → `<exeDir>/logs/dbsync.log`, rotated via lumberjack) untuk debug & error review aplikasi sehari-hari. Format text/logfmt, `AddSource:true`, level via `DBSYNC_LOG_LEVEL`. File-only writer (TUI haram stdout).
@@ -100,8 +107,9 @@ Snapshot 2026-05-27: `bd-09` series completed. Issue 009 finalized.
 | Arsitektur & schema | `docs/ARCHITECTURE.md` |
 | Urutan kerja | `docs/EXECUTION-ORDER.md` |
 | Detail issue | `docs/issues/00N-*.md` |
+| Distribusi & rilis | `docs/adr/0002-cross-platform-binary-distribution.md` |
 | Aturan agent | `CLAUDE.md` |
 | GitHub mirror | https://github.com/kentoespdam/dbsync/issues |
 
-*Last updated: 2026-05-26.*
+*Last updated: 2026-05-28.*
 *
