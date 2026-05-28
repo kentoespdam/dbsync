@@ -42,8 +42,10 @@ func (m model) handleWindowSize(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	m.runSync.width, m.runSync.height = msg.Width, msg.Height
 	m.historyViewer.width, m.historyViewer.height = msg.Width, msg.Height
 	m.checkpointViewer.width, m.checkpointViewer.height = msg.Width, msg.Height
-	
-	return m, nil
+
+	// Delegate to active child so its own Update sees the WindowSizeMsg
+	// (e.g. runScreenModel resizes its viewport). bd-7h9.
+	return m.delegateUpdate(msg)
 }
 
 func (m model) handleSuccess(msg successMsg) (tea.Model, tea.Cmd) {

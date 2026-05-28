@@ -44,7 +44,6 @@ type runScreenModel struct {
 
 	width      int
 	height     int
-	ready      bool
 }
 
 type tableResult struct {
@@ -64,15 +63,21 @@ func newRunScreenModel(store *storage.DB, conn storage.Connection, tables []stri
 	p := progress.New(progress.WithGradient("#5A56E0", "#EE6FF8"), progress.WithWidth(40))
 	v := viewport.New(0, 0)
 
+	current := ""
+	if len(tables) > 0 {
+		current = tables[0]
+	}
+
 	return runScreenModel{
-		store:     store,
-		conn:      conn,
-		tables:    tables,
-		masterKey: key,
-		dryRun:    dryRun,
-		progress:  p,
-		viewport:  v,
-		status:    "starting",
+		store:        store,
+		conn:         conn,
+		tables:       tables,
+		currentTable: current,
+		masterKey:    key,
+		dryRun:       dryRun,
+		progress:     p,
+		viewport:     v,
+		status:       "starting",
 	}
 }
 
@@ -80,7 +85,8 @@ func (m runScreenModel) Init() tea.Cmd {
 	if len(m.tables) == 0 {
 		return nil
 	}
-	m.currentTable = m.tables[m.tableIdx]
+	// currentTable is set in newRunScreenModel; value-receiver mutation here
+	// would be lost (bd-7h9).
 
 	if m.autoResume {
 		return func() tea.Msg { return startSyncMsg{resume: true} }
