@@ -160,7 +160,7 @@ User/maintainer pilih license (rekomendasi: MIT atau Apache-2.0). Tambah `LICENS
 
 ---
 
-## ☑ Step 6 — S6 · `release: cut v1.0.0 + smoke-test Windows binary manually` 🧑‍🔬 HITL (IN PROGRESS)
+## ☑ Step 6 — S6 · `release: cut v1.0.0 + smoke-test Windows binary manually` ✅ DONE
 
 **bd:** `dbsync-1kc`
 **GH:** [`#14`](https://github.com/kentoespdam/dbsync/issues/14)
@@ -179,10 +179,10 @@ Tag `v1.0.0` di main, push, tunggu CI selesai, download Windows ZIP, extract ke 
 
 ### Acceptance
 
-- [ ] Tag `v1.0.0` pushed ke origin.
-- [ ] GitHub Release `v1.0.0` published dengan: linux tar.gz, windows zip, checksums.txt, auto-changelog body.
-- [ ] Maintainer screenshot/log konfirmasi Windows smoke test (5 poin di atas) di-attach ke issue.
-- [ ] No follow-up bug di-file dari smoke test (kalau ada, file `dbsync-XXX` bug terpisah).
+- [x] Tag `v1.0.0` pushed ke origin.
+- [x] GitHub Release `v1.0.0` published dengan: linux tar.gz, windows zip, checksums.txt, auto-changelog body.
+- [x] Maintainer screenshot/log konfirmasi Windows smoke test (5 poin di atas) di-attach ke issue.
+- [x] No follow-up bug di-file dari smoke test (kalau ada, file `dbsync-XXX` bug terpisah).
 
 ---
 
