@@ -71,7 +71,7 @@ Append `dist/` ke `.gitignore`. Itu saja. GoReleaser output + `make build-linux/
 
 ---
 
-## ☑ Step 2 — S2 · `build: add cross-compile + version-injection Makefile targets`
+## ☑ Step 2 — S2 · `build: add cross-compile + version-injection Makefile targets` ✅ DONE
 
 **bd:** `dbsync-2bb`
 **GH:** [`#18`](https://github.com/kentoespdam/dbsync/issues/18)
@@ -85,11 +85,11 @@ Tambah variabel `VERSION`/`LDFLAGS`/`GOFLAGS` di Makefile (lihat plan §"Makefil
 
 ### Acceptance
 
-- [ ] `make build-all` produces `dist/dbsync_linux_amd64` (ELF 64-bit) + `dist/dbsync_windows_amd64.exe` (PE32+) — verify dengan `file`.
-- [ ] `./dist/dbsync_linux_amd64 --version` (atau `dbsync version`) print versi yang berasal dari `git describe`, BUKAN `v1.0.0-dev`.
-- [ ] `make build` (no GOOS override) masih jalan & inject versi yang sama.
-- [ ] `make clean` hapus `dbsync` binary + `dist/` directory.
-- [ ] `make help` cantumkan 5 target baru.
+- [x] `make build-all` produces `dist/dbsync_linux_amd64` (ELF 64-bit) + `dist/dbsync_windows_amd64.exe` (PE32+) — verify dengan `file`.
+- [x] `./dist/dbsync_linux_amd64 --version` (atau `dbsync version`) print versi yang berasal dari `git describe`, BUKAN `v1.0.0-dev`.
+- [x] `make build` (no GOOS override) masih jalan & inject versi yang sama.
+- [x] `make clean` hapus `dbsync` binary + `dist/` directory.
+- [x] `make help` cantumkan 5 target baru.
 
 ---
 
