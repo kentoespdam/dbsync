@@ -2,11 +2,15 @@ package tui
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/user/dbsync/internal/crypto"
 	"github.com/user/dbsync/internal/mysql"
 	"github.com/user/dbsync/internal/storage"
@@ -18,21 +22,54 @@ type tableItem struct {
 	hasPK    bool
 }
 
-func (i tableItem) Title() string       { return i.name }
-func (i tableItem) Description() string {
-	var badges []string
-	if i.isMapped {
-		badges = append(badges, "[mapped]")
-	}
-	if !i.hasPK {
-		badges = append(badges, "[no-pk]")
-	}
-	return strings.Join(badges, " ")
-}
+func (i tableItem) Title()       string { return i.name }
+func (i tableItem) Description() string { return "" }
 func (i tableItem) FilterValue() string { return i.name }
 
+type tableItemDelegate struct {
+	list.DefaultDelegate
+}
+
+func newTableItemDelegate() tableItemDelegate {
+	d := list.NewDefaultDelegate()
+	return tableItemDelegate{d}
+}
+
+func (d tableItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
+	i, ok := listItem.(tableItem)
+	if !ok {
+		return
+	}
+
+	icon := unmappedStyle.Render("○")
+	if i.isMapped {
+		icon = mappedStyle.Render("✓")
+	}
+
+	title := i.name
+	var description string
+	if !i.hasPK {
+		description = warningStyle.Render(" [no-pk]")
+	}
+
+	if index == m.Index() {
+		title = lipgloss.NewStyle().Foreground(lipgloss.Color("170")).Bold(true).Render(title)
+	}
+
+	fmt.Fprintf(w, " %s  %s%s", icon, title, description)
+}
+
+func (d tableItemDelegate) Height() int                             { return 1 }
+func (d tableItemDelegate) Spacing() int                            { return 0 }
+func (d tableItemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil }
+
 type tablePickerModel struct {
-	list      list.Model
+	list         list.Model
+	allItems     []list.Item
+	filterInput  textinput.Model
+	unmappedOnly bool
+	focused      int // 0: filter, 1: list
+
 	conn      storage.Connection
 	masterKey []byte
 	store     *storage.DB
@@ -42,25 +79,36 @@ type tablePickerModel struct {
 	choice    string
 	syncAll   bool
 	inited    bool
+	width     int
+	height    int
 }
 
 func newTablePickerModel(conn storage.Connection, masterKey []byte, store *storage.DB, flow string) tablePickerModel {
-	l := list.New(nil, list.NewDefaultDelegate(), 0, 0)
-	l.Title = "Select Table: " + conn.Name
+	l := list.New(nil, newTableItemDelegate(), 0, 0)
+	l.Title = "Tables: " + conn.Name
 	if flow == "sync" {
 		l.Title = "Select Table to Sync: " + conn.Name
 	}
 	l.SetShowStatusBar(false)
-	l.SetFilteringEnabled(true)
+	l.SetFilteringEnabled(false)
+	l.SetShowHelp(false)
+	l.SetShowTitle(false)
+
+	ti := textinput.New()
+	ti.Placeholder = "Filter tables..."
+	ti.Focus()
+	ti.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("170"))
+	ti.TextStyle = ti.PromptStyle
 
 	return tablePickerModel{
-		list:      l,
-		conn:      conn,
-		masterKey: masterKey,
-		store:     store,
-		loading:   true,
-		spinner:   spinner.New(spinner.WithSpinner(spinner.Dot)),
-		inited:    true,
+		list:        l,
+		filterInput: ti,
+		conn:        conn,
+		masterKey:   masterKey,
+		store:       store,
+		loading:     true,
+		spinner:     spinner.New(spinner.WithSpinner(spinner.Dot)),
+		inited:      true,
 	}
 }
 
@@ -115,7 +163,10 @@ type tablesLoadedMsg struct {
 func (m tablePickerModel) Update(msg tea.Msg) (tablePickerModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.list.SetSize(msg.Width, msg.Height-2)
+		m.width = msg.Width
+		m.height = msg.Height
+		m.list.SetSize(msg.Width, msg.Height-10) // Reserve space for header/filter/stats/help
+		m.filterInput.Width = msg.Width - 4      // Account for borders and padding
 
 	case spinner.TickMsg:
 		var cmd tea.Cmd
@@ -124,7 +175,8 @@ func (m tablePickerModel) Update(msg tea.Msg) (tablePickerModel, tea.Cmd) {
 
 	case tablesLoadedMsg:
 		m.loading = false
-		m.list.SetItems(msg.items)
+		m.allItems = msg.items
+		m.applyFilter()
 		return m, nil
 
 	case error:
@@ -133,29 +185,82 @@ func (m tablePickerModel) Update(msg tea.Msg) (tablePickerModel, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
-		if m.list.FilterState() == list.Filtering {
-			break
-		}
-
 		switch msg.String() {
-		case "enter":
-			if i, ok := m.list.SelectedItem().(tableItem); ok {
-				if i.name == "--- SYNC ALL MAPPED TABLES ---" {
-					m.syncAll = true
-					m.choice = "*"
-				} else {
-					m.choice = i.name
-				}
+		case "tab":
+			m.focused = (m.focused + 1) % 2
+			if m.focused == 0 {
+				m.filterInput.Focus()
+			} else {
+				m.filterInput.Blur()
 			}
+			return m, nil
+
+		case "enter":
+			if m.focused == 1 {
+				if i, ok := m.list.SelectedItem().(tableItem); ok {
+					if i.name == "--- SYNC ALL MAPPED TABLES ---" {
+						m.syncAll = true
+						m.choice = "*"
+					} else {
+						m.choice = i.name
+					}
+				}
+				return m, nil
+			}
+
+		case "u":
+			if m.focused == 1 {
+				m.unmappedOnly = !m.unmappedOnly
+				m.applyFilter()
+				return m, nil
+			}
+
 		case "r":
-			m.loading = true
-			return m, m.loadTables
+			if m.focused == 1 {
+				m.loading = true
+				return m, m.loadTables
+			}
+
+		case "esc":
+			m.choice = ""
+			return m, nil
 		}
+	}
+
+	if m.focused == 0 {
+		var cmd tea.Cmd
+		m.filterInput, cmd = m.filterInput.Update(msg)
+		m.applyFilter()
+		return m, cmd
 	}
 
 	var cmd tea.Cmd
 	m.list, cmd = m.list.Update(msg)
 	return m, cmd
+}
+
+func (m *tablePickerModel) applyFilter() {
+	var filtered []list.Item
+	text := strings.ToLower(m.filterInput.Value())
+
+	for _, item := range m.allItems {
+		ti := item.(tableItem)
+		matchesText := text == "" || strings.Contains(strings.ToLower(ti.name), text)
+		matchesUnmapped := !m.unmappedOnly || !ti.isMapped
+
+		// Special case for sync all mapped tables item - keep it if it matches text
+		if ti.name == "--- SYNC ALL MAPPED TABLES ---" {
+			if matchesText {
+				filtered = append(filtered, item)
+			}
+			continue
+		}
+
+		if matchesText && matchesUnmapped {
+			filtered = append(filtered, item)
+		}
+	}
+	m.list.SetItems(filtered)
 }
 
 func (m tablePickerModel) View() string {
@@ -165,5 +270,64 @@ func (m tablePickerModel) View() string {
 	if m.loading {
 		return "\n " + m.spinner.View() + " Loading tables..."
 	}
-	return m.list.View()
+
+	// 1. Stats segment
+	total := 0
+	mapped := 0
+	unmapped := 0
+	noPK := 0
+	for _, item := range m.allItems {
+		ti := item.(tableItem)
+		if ti.name == "--- SYNC ALL MAPPED TABLES ---" {
+			continue
+		}
+		total++
+		if ti.isMapped {
+			mapped++
+		} else {
+			unmapped++
+		}
+		if !ti.hasPK {
+			noPK++
+		}
+	}
+
+	title := titleStyle.Render(m.list.Title)
+	stats1 := fmt.Sprintf("%d tables • %d mapped • %d unmapped • %d no-pk", total, mapped, unmapped, noPK)
+
+	var statsLine string
+	if m.filterInput.Value() != "" || m.unmappedOnly {
+		var parts []string
+		if m.filterInput.Value() != "" {
+			parts = append(parts, fmt.Sprintf("Filter: '%s'", m.filterInput.Value()))
+		}
+		if m.unmappedOnly {
+			parts = append(parts, "unmapped-only")
+		}
+		parts = append(parts, fmt.Sprintf("showing %d", len(m.list.Items())))
+		statsLine = "\n" + strings.Join(parts, " • ")
+	}
+	statsSegment := title + "\n" + stats1 + statsLine
+
+	// 2. Filter segment
+	filterStyle := filterBlurStyle
+	if m.focused == 0 {
+		filterStyle = filterFocusStyle
+	}
+	filterSegment := filterStyle.Render(m.filterInput.View())
+
+	// 3. List segment
+	listSegment := m.list.View()
+
+	// 4. Help segment
+	helpLine1 := "tab focus • ↑↓ nav • enter open • u unmapped-only • r reload"
+	helpLine2 := "esc back"
+	helpSegment := helpStyle.Render(helpLine1 + "\n" + helpLine2)
+
+	return lipgloss.JoinVertical(lipgloss.Left,
+		statsSegment,
+		"\n"+filterSegment,
+		"\n"+listSegment,
+		"\n"+helpSegment,
+	)
 }

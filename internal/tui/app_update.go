@@ -34,7 +34,9 @@ func (m model) handleWindowSize(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 		m.connList.table.SetHeight(msg.Height - 5)
 	}
 	if m.connPicker.inited { m.connPicker.list.SetSize(msg.Width, msg.Height) }
-	if m.tablePicker.inited { m.tablePicker.list.SetSize(msg.Width, msg.Height) }
+	if m.tablePicker.inited {
+		m.tablePicker, _ = m.tablePicker.Update(msg)
+	}
 	
 	m.mappingEditor.width, m.mappingEditor.height = msg.Width, msg.Height
 	m.runSync.width, m.runSync.height = msg.Width, msg.Height
