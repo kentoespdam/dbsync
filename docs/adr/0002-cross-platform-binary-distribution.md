@@ -38,7 +38,7 @@ Setiap archive rilis harus menyertakan:
 - Binary (`dbsync` atau `dbsync.exe`).
 - `README.md` (instruksi cepat).
 - `CHANGELOG.md` (transparansi perubahan).
-- `LICENSE` (legalitas — segera setelah dipilih di S5).
+- `LICENSE` (MIT License).
 - File checksum global (`*_checksums.txt`) menggunakan SHA-256.
 
 ### 4. Automation Trigger

@@ -46,10 +46,10 @@ build-all: build-linux build-windows
 
 snapshot:
 	@echo "Running GoReleaser snapshot..."
-	goreleaser release --snapshot --clean
+	go run github.com/goreleaser/goreleaser/v2@latest release --snapshot --clean
 
 release-check:
-	@goreleaser check
+	go run github.com/goreleaser/goreleaser/v2@latest check
 
 clean:
 	@echo "Cleaning up..."

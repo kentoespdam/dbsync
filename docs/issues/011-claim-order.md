@@ -140,7 +140,7 @@ Buat `docs/adr/0002-cross-platform-binary-distribution.md` (style ADR-0001). Upd
 
 ---
 
-## ☑ Step 5 — S5 · `decision: choose project LICENSE before first public release` 🧑‍⚖️ HITL
+## ☑ Step 5 — S5 · `decision: choose project LICENSE before first public release` ✅ DONE
 
 **bd:** `dbsync-kuj`
 **GH:** [`#15`](https://github.com/kentoespdam/dbsync/issues/15)
@@ -154,9 +154,9 @@ User/maintainer pilih license (rekomendasi: MIT atau Apache-2.0). Tambah `LICENS
 
 ### Acceptance
 
-- [ ] `LICENSE` ada di repo root.
-- [ ] `make snapshot` setelah merge S5 → archive berisi `LICENSE`.
-- [ ] ADR-0002 (kalau sudah merged dari S4) update reference jika perlu.
+- [x] `LICENSE` ada di repo root.
+- [x] `make snapshot` setelah merge S5 → archive berisi `LICENSE`.
+- [x] ADR-0002 (kalau sudah merged dari S4) update reference jika perlu.
 
 ---
 
