@@ -163,10 +163,7 @@ type tablesLoadedMsg struct {
 func (m tablePickerModel) Update(msg tea.Msg) (tablePickerModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-		m.list.SetSize(msg.Width, msg.Height-10) // Reserve space for header/filter/stats/help
-		m.filterInput.Width = msg.Width - 4      // Account for borders and padding
+		m.resize(msg.Width, msg.Height)
 
 	case spinner.TickMsg:
 		var cmd tea.Cmd
@@ -177,6 +174,7 @@ func (m tablePickerModel) Update(msg tea.Msg) (tablePickerModel, tea.Cmd) {
 		m.loading = false
 		m.allItems = msg.items
 		m.applyFilter()
+		m.resize(m.width, m.height) // statsLine may toggle → recompute list height
 		return m, nil
 
 	case error:
@@ -212,6 +210,7 @@ func (m tablePickerModel) Update(msg tea.Msg) (tablePickerModel, tea.Cmd) {
 			if m.focused == 1 {
 				m.unmappedOnly = !m.unmappedOnly
 				m.applyFilter()
+				m.resize(m.width, m.height) // statsLine toggled → recompute
 				return m, nil
 			}
 
@@ -229,8 +228,12 @@ func (m tablePickerModel) Update(msg tea.Msg) (tablePickerModel, tea.Cmd) {
 
 	if m.focused == 0 {
 		var cmd tea.Cmd
+		prevHadStats := m.statsLineActive()
 		m.filterInput, cmd = m.filterInput.Update(msg)
 		m.applyFilter()
+		if m.statsLineActive() != prevHadStats {
+			m.resize(m.width, m.height) // statsLine toggled by typing/clearing filter
+		}
 		return m, cmd
 	}
 
@@ -263,19 +266,17 @@ func (m *tablePickerModel) applyFilter() {
 	m.list.SetItems(filtered)
 }
 
-func (m tablePickerModel) View() string {
-	if m.err != nil {
-		return errorStyle.Render("Error: " + m.err.Error())
-	}
-	if m.loading {
-		return "\n " + m.spinner.View() + " Loading tables..."
-	}
+// statsLineActive returns true when the secondary stats line (filter/unmapped-only)
+// should be rendered. The stats line adds 1 line to chrome height.
+func (m tablePickerModel) statsLineActive() bool {
+	return m.filterInput.Value() != "" || m.unmappedOnly
+}
 
-	// 1. Stats segment
-	total := 0
-	mapped := 0
-	unmapped := 0
-	noPK := 0
+// renderChrome builds the non-scrollable parts of the view: everything above
+// the list (top) and everything below it (bottom). Pure function of model
+// state — safe to measure with lipgloss.Height for layout calculation.
+func (m tablePickerModel) renderChrome() (top, bottom string) {
+	total, mapped, unmapped, noPK := 0, 0, 0, 0
 	for _, item := range m.allItems {
 		ti := item.(tableItem)
 		if ti.name == "--- SYNC ALL MAPPED TABLES ---" {
@@ -295,8 +296,8 @@ func (m tablePickerModel) View() string {
 	title := titleStyle.Render(m.list.Title)
 	stats1 := fmt.Sprintf("%d tables • %d mapped • %d unmapped • %d no-pk", total, mapped, unmapped, noPK)
 
-	var statsLine string
-	if m.filterInput.Value() != "" || m.unmappedOnly {
+	statsSegment := title + "\n" + stats1
+	if m.statsLineActive() {
 		var parts []string
 		if m.filterInput.Value() != "" {
 			parts = append(parts, fmt.Sprintf("Filter: '%s'", m.filterInput.Value()))
@@ -305,29 +306,63 @@ func (m tablePickerModel) View() string {
 			parts = append(parts, "unmapped-only")
 		}
 		parts = append(parts, fmt.Sprintf("showing %d", len(m.list.Items())))
-		statsLine = "\n" + strings.Join(parts, " • ")
+		statsSegment += "\n" + strings.Join(parts, " • ")
 	}
-	statsSegment := title + "\n" + stats1 + statsLine
 
-	// 2. Filter segment
 	filterStyle := filterBlurStyle
 	if m.focused == 0 {
 		filterStyle = filterFocusStyle
 	}
 	filterSegment := filterStyle.Render(m.filterInput.View())
 
-	// 3. List segment
-	listSegment := m.list.View()
-
-	// 4. Help segment
 	helpLine1 := "tab focus • ↑↓ nav • enter open • u unmapped-only • r reload"
 	helpLine2 := "esc back"
 	helpSegment := helpStyle.Render(helpLine1 + "\n" + helpLine2)
 
+	// One blank line between stats and filter for breathing room.
+	top = statsSegment + "\n" + filterSegment
+	bottom = helpSegment
+	return top, bottom
+}
+
+// resize is the single source of truth for sizing the inner list. It
+// measures actual rendered chrome height (header + filter + help) and
+// gives the list the remaining vertical space. Guarantees a minimum
+// usable list area of 3 rows even on very short terminals.
+//
+// Pointer receiver: mutates list and filterInput dimensions in place.
+func (m *tablePickerModel) resize(width, height int) {
+	m.width = width
+	m.height = height
+	m.filterInput.Width = width - 4 // border + padding
+	top, bottom := m.renderChrome()
+	// +1 for the blank line JoinVertical implies between top and list,
+	// and another +1 between list and bottom. Keep this in sync with View().
+	chromeH := lipgloss.Height(top) + lipgloss.Height(bottom) + 2
+	listH := height - chromeH
+	const minListH = 3
+	if listH < minListH {
+		listH = minListH
+	}
+	m.list.SetSize(width, listH)
+}
+
+func (m tablePickerModel) View() string {
+	if m.err != nil {
+		return errorStyle.Render("Error: " + m.err.Error())
+	}
+	if m.loading {
+		return "\n " + m.spinner.View() + " Loading tables..."
+	}
+
+	top, bottom := m.renderChrome()
+	listSegment := m.list.View()
+
+	// Single JoinVertical, blank lines explicit via "\n" prefix on inner segments.
+	// This matches the +2 accounted for in resize().
 	return lipgloss.JoinVertical(lipgloss.Left,
-		statsSegment,
-		"\n"+filterSegment,
+		top,
 		"\n"+listSegment,
-		"\n"+helpSegment,
+		"\n"+bottom,
 	)
 }
