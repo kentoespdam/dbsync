@@ -39,3 +39,4 @@ Thumbs.db
 *.log
 *.salt
 
+.openclaude-profile.json
