@@ -10,8 +10,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/user/dbsync/internal/crypto"
-	"github.com/user/dbsync/internal/paths"
+	"github.com/kentoespdam/dbsync/internal/crypto"
+	"github.com/kentoespdam/dbsync/internal/paths"
 	"golang.org/x/term"
 )
 

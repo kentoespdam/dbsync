@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/user/dbsync/internal/mysql"
-	"github.com/user/dbsync/internal/storage"
+	"github.com/kentoespdam/dbsync/internal/mysql"
+	"github.com/kentoespdam/dbsync/internal/storage"
 )
 
 // Resolve converts storage mappings into engine-ready resolved mappings.

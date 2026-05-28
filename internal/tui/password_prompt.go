@@ -10,9 +10,9 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/bubbles/textinput"
-	"github.com/user/dbsync/internal/config"
-	"github.com/user/dbsync/internal/crypto"
-	"github.com/user/dbsync/internal/storage"
+	"github.com/kentoespdam/dbsync/internal/config"
+	"github.com/kentoespdam/dbsync/internal/crypto"
+	"github.com/kentoespdam/dbsync/internal/storage"
 )
 
 type passwordPromptModel struct {

@@ -6,10 +6,10 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/user/dbsync/internal/crypto"
-	"github.com/user/dbsync/internal/engine"
-	"github.com/user/dbsync/internal/logger"
-	"github.com/user/dbsync/internal/mysql"
+	"github.com/kentoespdam/dbsync/internal/crypto"
+	"github.com/kentoespdam/dbsync/internal/engine"
+	"github.com/kentoespdam/dbsync/internal/logger"
+	"github.com/kentoespdam/dbsync/internal/mysql"
 )
 
 func (m runScreenModel) handleDone(ev engine.DoneEvent) (runScreenModel, tea.Cmd) {

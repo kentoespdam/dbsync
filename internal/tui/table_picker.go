@@ -11,9 +11,9 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/user/dbsync/internal/crypto"
-	"github.com/user/dbsync/internal/mysql"
-	"github.com/user/dbsync/internal/storage"
+	"github.com/kentoespdam/dbsync/internal/crypto"
+	"github.com/kentoespdam/dbsync/internal/mysql"
+	"github.com/kentoespdam/dbsync/internal/storage"
 )
 
 type tableItem struct {

@@ -2,7 +2,7 @@ package tui
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/user/dbsync/internal/storage"
+	"github.com/kentoespdam/dbsync/internal/storage"
 )
 
 type screen int

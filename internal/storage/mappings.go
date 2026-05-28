@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/user/dbsync/internal/mysql"
+	"github.com/kentoespdam/dbsync/internal/mysql"
 )
 
 type Mapping struct {

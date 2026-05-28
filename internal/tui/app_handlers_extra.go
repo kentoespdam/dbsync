@@ -4,7 +4,7 @@ import (
 	"context"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/user/dbsync/internal/storage"
+	"github.com/kentoespdam/dbsync/internal/storage"
 )
 
 func (m model) updateConnList(msg tea.Msg) (tea.Model, tea.Cmd) {

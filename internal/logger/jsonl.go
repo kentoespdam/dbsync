@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/user/dbsync/internal/paths"
-	"github.com/user/dbsync/internal/redact"
+	"github.com/kentoespdam/dbsync/internal/paths"
+	"github.com/kentoespdam/dbsync/internal/redact"
 )
 
 // Logger writes structured log entries to a JSONL file.

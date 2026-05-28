@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/user/dbsync/internal/logger"
-	"github.com/user/dbsync/internal/mysql"
-	"github.com/user/dbsync/internal/storage"
+	"github.com/kentoespdam/dbsync/internal/logger"
+	"github.com/kentoespdam/dbsync/internal/mysql"
+	"github.com/kentoespdam/dbsync/internal/storage"
 )
 
 type Engine struct {

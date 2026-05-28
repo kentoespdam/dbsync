@@ -16,9 +16,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
-	"github.com/user/dbsync/internal/crypto"
-	"github.com/user/dbsync/internal/logger"
-	"github.com/user/dbsync/internal/storage"
+	"github.com/kentoespdam/dbsync/internal/crypto"
+	"github.com/kentoespdam/dbsync/internal/logger"
+	"github.com/kentoespdam/dbsync/internal/storage"
 )
 
 func TestEngine_ResumeAndDryRun(t *testing.T) {

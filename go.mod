@@ -1,4 +1,4 @@
-module github.com/user/dbsync
+module github.com/kentoespdam/dbsync
 
 go 1.25.0
 

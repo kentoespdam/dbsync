@@ -6,9 +6,9 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/user/dbsync/internal/crypto"
-	"github.com/user/dbsync/internal/mysql"
-	"github.com/user/dbsync/internal/storage"
+	"github.com/kentoespdam/dbsync/internal/crypto"
+	"github.com/kentoespdam/dbsync/internal/mysql"
+	"github.com/kentoespdam/dbsync/internal/storage"
 )
 
 func (m mappingEditorModel) loadData() tea.Msg {

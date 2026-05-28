@@ -5,8 +5,8 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/user/dbsync/internal/mysql"
-	"github.com/user/dbsync/internal/storage"
+	"github.com/kentoespdam/dbsync/internal/mysql"
+	"github.com/kentoespdam/dbsync/internal/storage"
 )
 
 type mappingEditorModel struct {

@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/user/dbsync/internal/mysql"
+	"github.com/kentoespdam/dbsync/internal/mysql"
 )
 
 func TestMappingRepo(t *testing.T) {

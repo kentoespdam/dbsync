@@ -5,10 +5,10 @@ import (
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/user/dbsync/internal/crypto"
-	"github.com/user/dbsync/internal/mysql"
-	"github.com/user/dbsync/internal/redact"
-	"github.com/user/dbsync/internal/storage"
+	"github.com/kentoespdam/dbsync/internal/crypto"
+	"github.com/kentoespdam/dbsync/internal/mysql"
+	"github.com/kentoespdam/dbsync/internal/redact"
+	"github.com/kentoespdam/dbsync/internal/storage"
 )
 
 type connTestModel struct {

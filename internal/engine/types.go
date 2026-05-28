@@ -1,7 +1,7 @@
 package engine
 
 import (
-	"github.com/user/dbsync/internal/crypto"
+	"github.com/kentoespdam/dbsync/internal/crypto"
 )
 
 type cryptoDecryptor interface {

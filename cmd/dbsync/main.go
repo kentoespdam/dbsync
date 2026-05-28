@@ -16,11 +16,11 @@ import (
 	"path/filepath"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/user/dbsync/internal/applog"
-	"github.com/user/dbsync/internal/cli"
-	"github.com/user/dbsync/internal/config"
-	"github.com/user/dbsync/internal/storage"
-	"github.com/user/dbsync/internal/tui"
+	"github.com/kentoespdam/dbsync/internal/applog"
+	"github.com/kentoespdam/dbsync/internal/cli"
+	"github.com/kentoespdam/dbsync/internal/config"
+	"github.com/kentoespdam/dbsync/internal/storage"
+	"github.com/kentoespdam/dbsync/internal/tui"
 )
 
 // version is set at build time via -ldflags "-X main.version=...".

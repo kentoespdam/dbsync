@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/user/dbsync/internal/redact"
+	"github.com/kentoespdam/dbsync/internal/redact"
 )
 
 type redactHandler struct {

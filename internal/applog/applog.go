@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/user/dbsync/internal/paths"
+	"github.com/kentoespdam/dbsync/internal/paths"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 

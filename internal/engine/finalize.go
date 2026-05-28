@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/user/dbsync/internal/storage"
+	"github.com/kentoespdam/dbsync/internal/storage"
 )
 
 func (s *syncSession) finalize() {

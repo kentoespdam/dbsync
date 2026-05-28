@@ -8,9 +8,9 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
-	"github.com/user/dbsync/internal/config"
-	"github.com/user/dbsync/internal/engine"
-	"github.com/user/dbsync/internal/logger"
+	"github.com/kentoespdam/dbsync/internal/config"
+	"github.com/kentoespdam/dbsync/internal/engine"
+	"github.com/kentoespdam/dbsync/internal/logger"
 )
 
 var (

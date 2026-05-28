@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/user/dbsync/internal/config"
-	"github.com/user/dbsync/internal/storage"
+	"github.com/kentoespdam/dbsync/internal/config"
+	"github.com/kentoespdam/dbsync/internal/storage"
 )
 
 var (

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/user/dbsync/internal/mysql"
-	"github.com/user/dbsync/internal/storage"
+	"github.com/kentoespdam/dbsync/internal/mysql"
+	"github.com/kentoespdam/dbsync/internal/storage"
 )
 
 func (s *syncSession) preflight(ctx context.Context) error {

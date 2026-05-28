@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/user/dbsync/internal/engine"
+	"github.com/kentoespdam/dbsync/internal/engine"
 )
 
 func (m runScreenModel) Update(msg tea.Msg) (runScreenModel, tea.Cmd) {

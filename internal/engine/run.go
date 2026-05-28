@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/user/dbsync/internal/mysql"
+	"github.com/kentoespdam/dbsync/internal/mysql"
 )
 
 type syncSession struct {

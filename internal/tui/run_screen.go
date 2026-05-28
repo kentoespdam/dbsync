@@ -7,8 +7,8 @@ import (
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/user/dbsync/internal/engine"
-	"github.com/user/dbsync/internal/storage"
+	"github.com/kentoespdam/dbsync/internal/engine"
+	"github.com/kentoespdam/dbsync/internal/storage"
 )
 
 type runScreenModel struct {
