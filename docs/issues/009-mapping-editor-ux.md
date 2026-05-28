@@ -258,12 +258,139 @@ Acceptance:
 - [ ] Toast tidak block input (user bisa navigate selama toast tampil).
 - [ ] Setelah pop history, toast tetap visible di screen sebelumnya.
 
+### bd-09e — Table picker UX (Flow A: Tables & Mappings)
+
+**Konteks:** Setelah `Connection → Tables & Mappings`, user mendarat di
+`tablePickerModel` (Title `Select Table: <conn>`). Flat list bubbles
+default tanpa filter visible + badge teks `[mapped]`/`[no-pk]` di
+description. Saat tabel puluhan, scroll manual menyebalkan dan status
+mapped tidak ke-spot.
+
+File: `internal/tui/table_picker.go` (extend, bukan rewrite).
+
+#### Layout
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│ Tables: conn-prod                                              │   ← title
+│ 40 tables • 12 mapped • 28 unmapped • 2 no-pk                  │   ← stats line 1 (absolut)
+│ Filter: 'user' • unmapped-only • showing 3                     │   ← stats line 2 (opsional)
+├────────────────────────────────────────────────────────────────┤
+│ ┌── filter ────────────────────────────────────────────────┐   │
+│ │ user_                                                    │   │   ← textinput, border pink saat focus
+│ └──────────────────────────────────────────────────────────┘   │
+├────────────────────────────────────────────────────────────────┤
+│ ✓  users                                                       │
+│ ○  user_logs               [no-pk]                             │   ← cursor here (list focused)
+│ ○  user_sessions                                               │
+├────────────────────────────────────────────────────────────────┤
+│ tab focus • ↑↓ nav • enter open • u unmapped-only • r reload  │   ← static help bar
+│ esc back                                                       │
+└────────────────────────────────────────────────────────────────┘
+```
+
+#### Status ikon (2 state + badge)
+
+| Ikon | Arti | Kondisi |
+|------|------|---------|
+| `✓` (hijau 10) | sudah punya mapping di DB | `Mappings().Exists(connID, table) == true` |
+| `○` (abu 240) | belum di-map | `!Exists` |
+
+`[no-pk]` tetap badge teks di description (kuning 208), tidak block masuk
+mapping editor (sync engine yang reject; mapping editor scope kolom saja).
+
+#### Always-on filter input
+
+- `textinput.Model` selalu visible di atas list, default focus.
+- Border lipgloss: pink `170` saat focused, abu `240` saat blur.
+- Tab switches focus filter ↔ list.
+- Saat filter focused: ketikan masuk filter text; arrow/enter/u/r tidak
+  intercept (full ownership ke input). Tab pindah ke list.
+- Saat list focused: arrow nav, enter select, `u` toggle, `r` reload,
+  `esc` back. Tab balik ke filter.
+
+#### Filter compose (AND)
+
+- Filter teks = substring match terhadap `tableItem.name` (case-insensitive).
+- Toggle `u` = filter ke ikon `○` saja.
+- Aktif bersamaan = AND. Stats line 2 muncul format:
+  `Filter: 'user' • unmapped-only • showing 3`.
+- Kalau cuma toggle aktif: `Filter: unmapped-only • showing 28`.
+- Kalau cuma teks: `Filter: 'user' • showing 5`.
+- Tidak ada filter aktif → stats line 2 tidak muncul.
+
+#### Sort
+
+- Alphabetic ascending (mengikuti `mysql.ListTables` natural order).
+- Tidak ada grouping mapped/unmapped (sort posisi stabil setelah edit
+  mapping → kembali ke screen ini, tabel di posisi yang sama).
+
+#### Keybinding ringkasan
+
+| Key | Konteks | Aksi |
+|-----|---------|------|
+| `tab` | global | switch focus filter ↔ list |
+| `enter` | filter focus | (no-op; teks tetap di input) |
+| `enter` | list focus | open table (masuk mapping editor) |
+| `↑/↓` | list focus | nav |
+| `u` | list focus | toggle unmapped-only |
+| `r` | list focus | reload (re-query source DB + re-check Exists) |
+| `esc` | global | back to connection picker |
+
+#### Implementasi
+
+- Extend `tablePickerModel`: tambah `filterInput textinput.Model`,
+  `unmappedOnly bool`, `focused int` (0=filter, 1=list).
+- `View()` pecah jadi 4 segmen: stats, filter input (bordered), list,
+  help bar. Pakai `lipgloss.JoinVertical`.
+- `Update()`:
+  - `tab` → toggle `focused`, re-set border filter input style.
+  - Saat `focused == 0`: route msg ke `filterInput.Update`, lalu
+    `applyFilter()`.
+  - Saat `focused == 1`: tangani `u`, `r`, `enter`, default forward ke
+    `list.Update`.
+- `applyFilter()`:
+  - Iterasi `allItems`, filter by substring AND by unmapped flag.
+  - `list.SetItems(filtered)`, hitung stats untuk header.
+- Store `allItems` (full set) terpisah dari `list.Items()` (filtered).
+- **Penting:** Stats line 1 selalu hitung atas `allItems`, BUKAN atas
+  `list.Items()` (yang sudah filtered).
+- Custom delegate `tableItemDelegate` render prefix ikon dengan warna
+  via `lipgloss.Style`. Badge `[no-pk]` tetap di description (default
+  delegate sudah hide kalau pakai custom).
+
+#### Out of scope (bd-09e)
+
+- Bulk select & bulk-map (defer).
+- "Run all unmapped" shortcut dari screen ini (defer).
+- Sort by status / by column count (defer).
+- Live polling refresh (cukup manual `r`).
+
+Acceptance:
+- [ ] Filter input visible saat masuk screen, default focused (border pink).
+- [ ] Ketik teks di filter → list mengecil sesuai substring; stats line 2 muncul.
+- [ ] Tab → focus pindah list (cursor highlight); border filter jadi abu.
+- [ ] `u` di list focused → toggle unmapped-only; stats line 2 update.
+- [ ] Filter teks + `u` aktif → AND compose; stats `Filter: 'X' • unmapped-only • showing N`.
+- [ ] Tabel mapped tampil ikon `✓` hijau; unmapped tampil `○` abu.
+- [ ] `[no-pk]` tetap visible di description tabel tanpa PK; tidak block `enter`.
+- [ ] `r` reload re-query + re-check Exists; filter state TIDAK di-reset.
+- [ ] Stats line 1 (`40 tables • 12 mapped • ...`) selalu menampilkan total absolut, tidak ikut filter.
+- [ ] Reload setelah edit mapping → tabel yang baru di-map ikon berubah `○` → `✓`.
+
+#### Test
+
+- Manual QA: utamakan flow A. Flow B (`Select Table to Sync`) tetap pakai
+  model yang sama; verifikasi tidak regresi (toggle `u` di flow B harus
+  tetap jalan tapi `--- SYNC ALL MAPPED TABLES ---` item tetap di top).
+- Tidak ada unit test wajib (TUI scope per `CLAUDE.md`).
+
 ---
 
 ## Dependency chain
 
 ```
-bd-09a (schema+automap) ──► bd-09b (table redesign) ──► bd-09c (modal+validation) ──► bd-09d (toast)
+bd-09a (schema+automap) ──► bd-09b (table redesign) ──► bd-09c (modal+validation) ──► bd-09d (toast) ──► bd-09e (table picker UX)
 ```
 
 Setiap PR di-merge berurutan. bd-09a tidak ubah TUI sama sekali (pure
@@ -299,6 +426,7 @@ storage + mysql), aman di-review independen.
 - [ ] Discard guard saat esc dengan unsaved changes.
 - [ ] Unit test untuk `IsBool`, `EnumValues`, synthetic `AutoMap`.
 - [ ] `context7` MCP di-query SEBELUM coding (catat di PR description).
+- [ ] Table picker (Flow A): always-on filter, ikon ✓/○, stats 2-line, toggle `u` unmapped-only, tab switch focus.
 
 ---
 

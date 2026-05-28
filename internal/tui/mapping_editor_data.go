@@ -94,7 +94,9 @@ func (m *mappingEditorModel) refreshTable() {
 	rows := make([]table.Row, len(m.filteredMappings))
 	for i, mp := range m.filteredMappings {
 		dc := m.findDestCol(mp.DestColumn)
-		icon, style := m.mappingStatus(mp, dc)
+		// bd-XX: plain glyph only — lipgloss ANSI bytes confuse bubbles/table
+		// runewidth.Truncate (ANSI-unaware), bleeding escapes into next column.
+		icon, _ := m.mappingStatus(mp, dc)
 
 		src := "-"
 		if mp.SourceColumn.Valid {
@@ -106,7 +108,7 @@ func (m *mappingEditorModel) refreshTable() {
 		}
 
 		rows[i] = table.Row{
-			style.Render(icon),
+			icon,
 			mp.DestColumn,
 			src,
 			def,

@@ -70,7 +70,7 @@ func (m model) updateConnPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.pushHistory(m.current)
 		m.current = screenTablePicker
 		m.tablePicker = newTablePickerModel(*m.selectedConn, m.masterKey, m.store, m.flow)
-		m.tablePicker.list.SetSize(m.width, m.height)
+		m.tablePicker.resize(m.width, m.height)
 		return m, tea.Batch(cmd, m.tablePicker.Init())
 	}
 	return m, cmd

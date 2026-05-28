@@ -17,12 +17,11 @@ func (m runScreenModel) Update(msg tea.Msg) (runScreenModel, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
 		m.viewport.Width, m.viewport.Height = msg.Width, msg.Height-10
-		m.ready = true
 	case promptResumeMsg:
 		m.status = "prompt_resume"
 	case startSyncMsg:
 		m.status, m.startTime = "running", time.Now()
-		return m, m.startSync(msg.resume)
+		return m, tea.Batch(m.startSync(msg.resume), m.estimateRows())
 	case syncStartedMsg:
 		return m.handleSyncStarted(msg)
 	case estimationMsg:

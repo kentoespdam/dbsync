@@ -9,7 +9,6 @@ import (
 )
 
 func (m runScreenModel) View() string {
-	if !m.ready { return "Initializing..." }
 	header := m.renderHeader()
 	var body string
 	switch m.status {

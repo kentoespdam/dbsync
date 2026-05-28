@@ -30,8 +30,8 @@
 ## Claim order (linear chain)
 
 ```
-bd-09a (foundation)  ──►  bd-09b (table redesign)  ──►  bd-09c (modal + validation)  ──►  bd-09d (toast)
-   #9                       #10                          #11                              #12
+bd-09a (foundation)  ──►  bd-09b (table redesign)  ──►  bd-09c (modal + validation)  ──►  bd-09d (toast)  ──►  bd-09e (table picker UX)
+   #9                       #10                          #11                              #12                  (gh TBD)
 ```
 
 ---
@@ -178,7 +178,49 @@ bd-09a (foundation)  ──►  bd-09b (table redesign)  ──►  bd-09c (moda
 
 ---
 
-## Final QA (post bd-09d, dijalankan oleh reviewer terakhir)
+## ☑ Step 5 — bd-09e · Table picker UX (Flow A)
+
+- **Beads:** `dbsync-0dt`
+- **GitHub:** [#13](https://github.com/kentoespdam/dbsync/issues/13)
+- **Branch suggest:** `feat/bd-09e-table-picker-ux`
+- **Plan section:** `bd-09e — Table picker UX (Flow A: Tables & Mappings)`
+- **Prerequisite:** Step 4 merged ✅.
+- **Touches:** `internal/tui/table_picker.go` (extend). **TIDAK** ada perubahan di `mapping_editor*.go` / `mapping_edit_form*.go`.
+
+### Pre-work
+- [x] Baca section "bd-09e — Table picker UX" + ASCII layout di plan.
+- [x] `context7` query: `github.com/charmbracelet/bubbles/list` (custom delegate + dynamic SetItems), `github.com/charmbracelet/bubbles/textinput` (border style on focus/blur), `github.com/charmbracelet/lipgloss` (JoinVertical untuk segmen header/filter/list/help). Catat di PR description.
+
+### Implementasi
+- [x] Extend `tablePickerModel`: `filterInput textinput.Model`, `unmappedOnly bool`, `focused int`, `allItems []tableItem` (cache full set).
+- [x] Custom delegate `tableItemDelegate` (kolom ikon ✓/○ + render badge `[no-pk]` kuning).
+- [x] `View()` 4-segmen: stats (2-line), filter input (bordered), list, help bar (1-line).
+- [x] `Update()`: tab toggle focus; route msg by `focused`; tangani `u`/`r`/`enter` saat list focused.
+- [x] `applyFilter()`: substring AND unmapped filter; live update stats counts.
+- [x] Stats line 1 hitung atas `allItems` (absolut), line 2 hanya muncul kalau filter aktif.
+- [x] Reload (`r`) pertahankan filter state (text + toggle).
+- [x] **Tidak break Flow B** (`Select Table to Sync`): semua perubahan jalan untuk flow B juga; item `--- SYNC ALL MAPPED TABLES ---` tetap di top, ikut filter sebagai `✓` (mapped).
+
+### QA manual
+- [x] Masuk `Tables & Mappings` → filter input langsung focused, border pink.
+- [x] Ketik `user` → list menyempit; stats line 2 muncul `Filter: 'user' • showing N`.
+- [x] Tab → focus pindah list, border filter abu, cursor highlight di list.
+- [x] Di list focus: `u` → toggle unmapped-only; stats line 2 update.
+- [x] Filter teks + `u` aktif bersamaan → AND compose; stats `Filter: 'user' • unmapped-only • showing N`.
+- [x] Tabel mapped tampil `✓` hijau; unmapped `○` abu; tabel tanpa PK tetap punya `[no-pk]` kuning di description.
+- [x] `r` reload re-query + recompute; filter teks + toggle TIDAK reset.
+- [x] Stats line 1 absolut (`40 tables • 12 mapped • 28 unmapped • 2 no-pk`) tidak ikut filter.
+- [x] Selesai edit mapping → balik ke screen → `r` → tabel target sekarang ikon `✓`.
+- [x] Flow B (`Run Sync → Select Table to Sync`) tidak regresi.
+
+### Close-out
+- [x] PR merged.
+- [x] `bd close dbsync-0dt`.
+- [x] `git push && bd dolt push`.
+
+---
+
+## Final QA (post bd-09e, dijalankan oleh reviewer terakhir)
 
 Checklist lengkap ada di [`009-mapping-editor-ux.md`](./009-mapping-editor-ux.md) section "Manual QA". Ringkas:
 
@@ -189,6 +231,7 @@ Checklist lengkap ada di [`009-mapping-editor-ux.md`](./009-mapping-editor-ux.md
 - [x] ENUM column → dropdown nilai valid.
 - [x] Esc dengan dirty → confirm "Discard?".
 - [x] Resize terminal → layout tetap usable.
+- [ ] Table picker (Flow A): filter input always-on, ikon ✓/○, stats 2-line, toggle `u`, tab switch focus, badge `[no-pk]`.
 
 ---
 
