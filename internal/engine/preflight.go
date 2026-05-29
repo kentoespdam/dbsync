@@ -45,7 +45,11 @@ func (s *syncSession) preflight(ctx context.Context) error {
 	if err != nil || len(mappings) == 0 {
 		return fmt.Errorf("load mappings: %w (count: %d)", err, len(mappings))
 	}
-	s.mappings = Resolve(mappings)
+	resolved, err := Resolve(mappings)
+	if err != nil {
+		return fmt.Errorf("resolve mappings: %w", err)
+	}
+	s.mappings = resolved
 
 	s.pkCols, err = mysql.DetectPK(ctx, s.srcPool.DB(), conn.SourceDB, s.opts.TableName)
 	if err != nil || len(s.pkCols) == 0 {

@@ -93,7 +93,7 @@ bd-13a (storage)  ──►  bd-13b (engine)  ──►  bd-13c (CLI)  ──►
 
 ---
 
-## ☐ Step 2 — bd-13b · Engine: extend Resolve dengan value_map lookup
+## ☑ Step 2 — bd-13b · Engine: extend Resolve dengan value_map lookup
 
 - **Beads:** `dbsync-tjg`
 - **GitHub:** [#30](https://github.com/kentoespdam/dbsync/issues/30)
@@ -104,26 +104,26 @@ bd-13a (storage)  ──►  bd-13b (engine)  ──►  bd-13c (CLI)  ──►
 - **TIDAK** menyentuh: `internal/storage/**`, `internal/cli/**`, `internal/tui/**`, `internal/mysql/**`.
 
 ### Pre-work
-- [ ] `gitnexus_context({name: "Resolve"})` + `gitnexus_impact({target: "Resolve"})`.
-- [ ] `context7` (opsional) `encoding/json` topik unmarshal map.
+- [x] `gitnexus_context({name: "Resolve"})` + `gitnexus_impact({target: "Resolve"})`.
+- [x] `context7` (opsional) `encoding/json` topik unmarshal map.
 
 ### Implementasi
-- [ ] Parse `m.ValueMap` sekali di `Resolve` (di luar closure).
-- [ ] Tambah lookup layer di `ValueFn`: passthrough kalau map nil, hit → dest, miss → error.
-- [ ] Validasi: `ValueMap` set tapi `SourceColumn` invalid → `Resolve` error.
-- [ ] **Jangan** ubah signature `Resolve` tanpa alasan kuat (gitnexus_impact dulu).
+- [x] Parse `m.ValueMap` sekali di `Resolve` (di luar closure).
+- [x] Tambah lookup layer di `ValueFn`: passthrough kalau map nil, hit → dest, miss → error.
+- [x] Validasi: `ValueMap` set tapi `SourceColumn` invalid → `Resolve` error.
+- [x] **Jangan** ubah signature `Resolve` tanpa alasan kuat (gitnexus_impact dulu).
 
 ### Test
-- [ ] Passthrough (cover 3 case lama tetap pass).
-- [ ] Hit, miss, NULL row + default + value_map, NULL row tanpa default + value_map.
-- [ ] Invalid JSON `ValueMap` → error.
-- [ ] `ValueMap` tanpa `SourceColumn` → error.
+- [x] Passthrough (cover 3 case lama tetap pass).
+- [x] Hit, miss, NULL row + default + value_map, NULL row tanpa default + value_map.
+- [x] Invalid JSON `ValueMap` → error.
+- [x] `ValueMap` tanpa `SourceColumn` → error.
 
 ### Close-out
-- [ ] `gitnexus_detect_changes()` → attach di PR.
-- [ ] PR merged.
-- [ ] `bd close <bd-id>`.
-- [ ] `git push && bd dolt push`.
+- [x] `gitnexus_detect_changes()` → attach di PR.
+- [x] PR merged.
+- [x] `bd close <bd-id>`.
+- [x] `git push && bd dolt push`.
 
 ---
 
