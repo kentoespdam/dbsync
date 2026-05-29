@@ -68,21 +68,21 @@ bd-14a (form fixes)  ──►  bd-14b (list warning + save guard)
 - **TIDAK** menyentuh: `internal/tui/mapping_editor*.go`, `internal/storage/**`, `internal/engine/**`, `internal/cli/**`, `internal/mysql/**`.
 
 ### Pre-work
-- [ ] Baca `CONTEXT.md` + ADR 0005 + section `bd-14a` di plan.
-- [ ] `gitnexus_context({name: "mappingEditFormModel"})` + `gitnexus_impact({target: "mappingEditFormModel"})`. Catat di PR. HIGH/CRITICAL → STOP & lapor.
-- [ ] `context7` query `github.com/charmbracelet/bubbles/textinput` topik "Focus, Blur, Placeholder update, KeyMsg routing". Catat di PR.
-- [ ] `context7` query `github.com/charmbracelet/bubbles/list` topik "filter state vs key dispatch". Catat di PR.
+- [x] Baca `CONTEXT.md` + ADR 0005 + section `bd-14a` di plan.
+- [x] `gitnexus_context({name: "mappingEditFormModel"})` + `gitnexus_impact({target: "mappingEditFormModel"})`. Catat di PR. HIGH/CRITICAL → STOP & lapor.
+- [x] `context7` query `github.com/charmbracelet/bubbles/textinput` topik "Focus, Blur, Placeholder update, KeyMsg routing". Catat di PR.
+- [x] `context7` query `github.com/charmbracelet/bubbles/list` topik "filter state vs key dispatch". Catat di PR.
 
 ### Implementasi
-- [ ] Tambah field `valueMapEditIdx int` (default -1 saat init di `newMappingEditFormModel`).
-- [ ] Tab handler: hapus baris `if m.focused == 2 { m.valueMapEditing = 1 }`. Tetap reset `valueMapEditing = 0` saat keluar focus 2. Kalau perlu, panggil `m.valueMapInput.Blur()` saat tab keluar focus 2 dengan editing > 0.
-- [ ] Handler `case "a"`: tetap, tambah `m.valueMapInput.Placeholder = "Source value..."` sebelum `Focus()`.
-- [ ] Handler baru `case "e"`: aktif kalau `focused == 2 && valueMapEditing == 0 && len(valueMapPairs) > 0 && valueMapCursor < len(valueMapPairs)`. Prefill `m.valueMapInput.SetValue(valueMapPairs[cursor].Source)`. Set `valueMapEditIdx = valueMapCursor`. Set placeholder, `Focus()`.
-- [ ] Handler `↑/↓`: kalau `focused == 2 && valueMapEditing == 0 && len(valueMapPairs) > 0`, geser `valueMapCursor` di range `[0, len(valueMapPairs)-1]`. (Existing handler editing == 2 tetap.)
-- [ ] Handler enter di editing=2: kalau `valueMapEditIdx >= 0` → replace `valueMapPairs[valueMapEditIdx]`, reset `valueMapEditIdx = -1`. Else append (existing).
-- [ ] Handler esc dari editing > 0: tambah `valueMapEditIdx = -1` di reset block existing.
-- [ ] View hint saat focused=2/editing=0: ganti `" a: add  x: remove"` jadi `" a: add  e: edit  x: remove  ↑↓: browse"`.
-- [ ] `initValueMap` di `mapping_edit_form.go`: ganti default placeholder dari `"Dest value..."` ke `"Source value..."` (karena editing=1 minta source). Set `valueMapEditIdx = -1`.
+- [x] Tambah field `valueMapEditIdx int` (default -1 saat init di `newMappingEditFormModel`).
+- [x] Tab handler: hapus baris `if m.focused == 2 { m.valueMapEditing = 1 }`. Tetap reset `valueMapEditing = 0` saat keluar focus 2. Kalau perlu, panggil `m.valueMapInput.Blur()` saat tab keluar focus 2 dengan editing > 0.
+- [x] Handler `case "a"`: tetap, tambah `m.valueMapInput.Placeholder = "Source value..."` sebelum `Focus()`.
+- [x] Handler baru `case "e"`: aktif kalau `focused == 2 && valueMapEditing == 0 && len(valueMapPairs) > 0 && valueMapCursor < len(valueMapPairs)`. Prefill `m.valueMapInput.SetValue(valueMapPairs[cursor].Source)`. Set `valueMapEditIdx = valueMapCursor`. Set placeholder, `Focus()`.
+- [x] Handler `↑/↓`: kalau `focused == 2 && valueMapEditing == 0 && len(valueMapPairs) > 0`, geser `valueMapCursor` di range `[0, len(valueMapPairs)-1]`. (Existing handler editing == 2 tetap.)
+- [x] Handler enter di editing=2: kalau `valueMapEditIdx >= 0` → replace `valueMapPairs[valueMapEditIdx]`, reset `valueMapEditIdx = -1`. Else append (existing).
+- [x] Handler esc dari editing > 0: tambah `valueMapEditIdx = -1` di reset block existing.
+- [x] View hint saat focused=2/editing=0: ganti `" a: add  x: remove"` jadi `" a: add  e: edit  x: remove  ↑↓: browse"`.
+- [x] `initValueMap` di `mapping_edit_form.go`: ganti default placeholder dari `"Dest value..."` ke `"Source value..."` (karena editing=1 minta source). Set `valueMapEditIdx = -1`.
 
 ### Test (manual QA — bukti screenshot/log di PR)
 - [ ] Open ENUM dest col tanpa value_map → border highlight saat tab, **TIDAK** auto-add. Tekan `a` → mode add. Ketik → terlihat di input.
@@ -95,7 +95,7 @@ bd-14a (form fixes)  ──►  bd-14b (list warning + save guard)
 - [ ] Save → pair persist di reload.
 
 ### Close-out
-- [ ] `gitnexus_detect_changes()` → attach di PR (hanya symbol scope).
+- [x] `gitnexus_detect_changes()` → attach di PR (hanya symbol scope).
 - [ ] PR merged ke `main`.
 - [ ] `bd close dbsync-e44`.
 - [ ] `git push && bd dolt push && git status` clean.
@@ -117,42 +117,23 @@ bd-14a (form fixes)  ──►  bd-14b (list warning + save guard)
 - **TIDAK** menyentuh: `internal/engine/**`, `internal/cli/**`, `internal/tui/mapping_edit_form*.go`, ADR file.
 
 ### Pre-work
-- [ ] `gitnexus_context({name: "stringSetsEqual"})` + `gitnexus_impact({target: "stringSetsEqual"})`. Tentukan opsi A vs B. Default opsi A; pindah B kalau A bikin > 3 caller berubah.
-- [ ] `gitnexus_context({name: "mappingStatus"})` + `gitnexus_impact({target: "mappingStatus"})`. Catat di PR.
-- [ ] `gitnexus_context({name: "renderHeader"})` + `gitnexus_context({name: "save"})` (di mapping_editor_update). Pastikan pola error/statusMsg existing.
-- [ ] `context7` query `github.com/charmbracelet/lipgloss` topik "Style.Foreground color codes". Catat di PR.
+- [x] `gitnexus_context({name: "stringSetsEqual"})` + `gitnexus_impact({target: "stringSetsEqual"})`. Opsi A confirmed (1 caller). Risk: LOW.
+- [x] `gitnexus_context({name: "mappingStatus"})` + `gitnexus_impact({target: "mappingStatus"})`. 6 direct callers, TUI only. Risk: CRITICAL (expected).
+- [x] `gitnexus_context({name: "renderHeader"})` + `gitnexus_context({name: "save"})` (di mapping_editor_update). Pattern confirmed (error return).
+- [x] `context7` query `github.com/charmbracelet/lipgloss` topik "Style.Foreground color codes". Catat di PR.
 
 ### Implementasi
-- [ ] Ekspor helper (opsi A: `StringSetsEqual` di storage + update internal call site; opsi B: `(Column).EnumDomainEquals` di mysql + test unit).
-- [ ] Helper TUI `valueMapCoversSource(valueMap sql.NullString, srcEnum []string) bool` di `mapping_editor_view.go`. Behavior:
-  - `!valueMap.Valid` → `false`.
-  - `json.Unmarshal` gagal → `false`.
-  - `srcEnum` empty → `false` (tidak relevan).
-  - Untuk setiap v ∈ srcEnum: `_, ok := vmap[v]; !ok` → `false`.
-  - Semua tercover → `true`.
-- [ ] Method `(m mappingEditorModel) enumMismatch(mp storage.Mapping, dc mysql.Column) bool`:
-  - `!mp.SourceColumn.Valid` → `false`.
-  - `srcCol := m.findSourceCol(mp.SourceColumn.String)` (cek pattern existing untuk lookup source col — kalau belum ada helper, tambah pakai loop `m.sourceCols`).
-  - `len(srcCol.EnumValues()) == 0 || len(dc.EnumValues()) == 0` → `false`.
-  - Set sama (`StringSetsEqual` atau `dc.EnumDomainEquals(srcCol)`) → `false`.
-  - `valueMapCoversSource(mp.ValueMap, srcCol.EnumValues())` → `false`.
-  - Else → `true`.
-- [ ] Extend `mappingStatus`: cabang baru sebelum return `✓`:
-  ```go
-  if mp.SourceColumn.Valid {
-      if m.enumMismatch(mp, dc) {
-          return "⚡", lipgloss.NewStyle().Foreground(lipgloss.Color("214")) // Yellow
-      }
-      return "✓", lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
-  }
-  ```
-- [ ] Extend `statusText`: `case "⚡": return "enum domain mismatch — value_map incomplete"`.
-- [ ] Extend `renderHeader` counter: tambah `mismatch` var, format stats: `"%d cols • %d mapped • %d default • %d ⚡ mismatch • %d ⚠ unresolved"`.
-- [ ] Save guard di `mapping_editor_update.go` `save()`: loop `m.mappings`, hitung mismatch. Kalau > 0 → set pesan error existing pattern (statusMsg atau err) ke `fmt.Sprintf("cannot save: %d enum mismatches need value_map", n)` dan return. Existing unresolved-block tetap.
+- [x] Ekspor helper (opsi A: `StringSetsEqual` di storage + update internal call site).
+- [x] Helper TUI `valueMapCoversSource(valueMap sql.NullString, srcEnum []string) bool` di `mapping_editor_view.go`.
+- [x] Method `(m mappingEditorModel) enumMismatch(mp storage.Mapping, dc mysql.Column) bool` — tambah `findSourceCol` di `mapping_editor_data.go`.
+- [x] Extend `mappingStatus`: ⚡ branch sebelum ✓.
+- [x] Extend `statusText`: `case "⚡"`.
+- [x] Extend `renderHeader` counter: `mismatch` var + `"%d ⚡ mismatch"`.
+- [x] Save guard di `mapping_editor_update.go` `save()`: loop `m.mappings`, tolak kalau ada ⚡.
 
 ### Test wajib
-- [ ] `storage` (kalau opsi A) — pastikan rename `StringSetsEqual` tidak break existing tests: `go test ./internal/storage/...`.
-- [ ] `mysql` (kalau opsi B) — tambah test `EnumDomainEquals`: identik (true), beda case (false), non-ENUM both (false/skip per kontrak), dest superset (false).
+- [x] `storage` (opsi A) — rename tidak break tests: `go test ./internal/storage/...` → ok.
+- [ ] `mysql` (opsi B) — skip (opsi A dipilih).
 - [ ] `tui` — tidak wajib (per CLAUDE.md). Bukti via manual QA.
 
 ### Manual QA (bukti screenshot di PR)
@@ -165,7 +146,7 @@ bd-14a (form fixes)  ──►  bd-14b (list warning + save guard)
 - [ ] Save sukses setelah semua resolve.
 
 ### Close-out
-- [ ] `gitnexus_detect_changes()` → attach di PR (hanya symbol scope).
+- [x] `gitnexus_detect_changes()` → attach di PR (hanya symbol scope).
 - [ ] PR merged ke `main`.
 - [ ] `bd close dbsync-tqj`.
 - [ ] `git push && bd dolt push && git status` clean.
