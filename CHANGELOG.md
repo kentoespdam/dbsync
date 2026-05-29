@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.2.0] - 2026-05-29
+
+### Added
+- ValueMap editor in TUI mapping edit form (ENUM only) (bd-13e).
+- Detect ENUM domain mismatch in AutoMap (bd-13d).
+- CLI `--value-map` and `--value-map-file` flags for column value translation (bd-13c).
+- Engine Resolve extended with ValueMap lookup and config validation (bd-13b).
+- Storage support for ValueMap enum translation read/write (bd-13a).
+- TUI list screen ENUM mismatch warning + save guard (bd-14b).
+- ADR 0005: Value Map for enum translation.
+
+### Fixed
+- Value map form focus, browse button, and label display in edit form (bd-14a).
+
 ## [v1.1.0] - 2026-05-29
 
 ### Changed
