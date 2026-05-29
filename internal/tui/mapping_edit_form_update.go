@@ -19,8 +19,11 @@ func (m mappingEditFormModel) Update(msg tea.Msg) (mappingEditFormModel, tea.Cmd
 			if m.hasValueMap { maxFocus = 2 }
 			m.focused = (m.focused + 1) % (maxFocus + 1)
 			if m.focused == 1 && !m.isBool && !m.isEnum { m.input.Focus() } else { m.input.Blur() }
-			if m.focused == 2 { m.valueMapEditing = 1 }
-			if m.focused != 2 { m.valueMapEditing = 0 }
+			if m.focused != 2 {
+				if m.valueMapEditing > 0 { m.valueMapInput.Blur() }
+				m.valueMapEditing = 0
+				m.valueMapEditIdx = -1
+			}
 			return m, nil
 		case "enter":
 			if m.focused == 0 && m.sourceList.FilterState() == list.Filtering { break }
@@ -34,9 +37,16 @@ func (m mappingEditFormModel) Update(msg tea.Msg) (mappingEditFormModel, tea.Cmd
 			}
 			if m.focused == 2 && m.valueMapEditing == 2 {
 				dst := m.valueMapDestHint[m.valueMapCursor]
-				m.valueMapPairs = append(m.valueMapPairs, ValueMapPair{
-					Source: m.valueMapInput.Value(), Destination: dst,
-				})
+				if m.valueMapEditIdx >= 0 {
+					m.valueMapPairs[m.valueMapEditIdx] = ValueMapPair{
+						Source: m.valueMapInput.Value(), Destination: dst,
+					}
+					m.valueMapEditIdx = -1
+				} else {
+					m.valueMapPairs = append(m.valueMapPairs, ValueMapPair{
+						Source: m.valueMapInput.Value(), Destination: dst,
+					})
+				}
 				m.valueMapInput.SetValue("")
 				m.valueMapEditing = 0
 				return m, nil
@@ -50,6 +60,7 @@ func (m mappingEditFormModel) Update(msg tea.Msg) (mappingEditFormModel, tea.Cmd
 			if m.focused == 2 && m.valueMapEditing > 0 {
 				m.valueMapEditing = 0
 				m.valueMapInput.SetValue("")
+				m.valueMapEditIdx = -1
 				return m, nil
 			}
 			m.canceled, m.done = true, true
@@ -59,13 +70,31 @@ func (m mappingEditFormModel) Update(msg tea.Msg) (mappingEditFormModel, tea.Cmd
 				if m.valueMapCursor > 0 { m.valueMapCursor-- }
 				return m, nil
 			}
+			if m.focused == 2 && m.valueMapEditing == 0 && len(m.valueMapPairs) > 0 {
+				if m.valueMapCursor > 0 { m.valueMapCursor-- }
+				return m, nil
+			}
 		case "down":
 			if m.focused == 2 && m.valueMapEditing == 2 {
 				if m.valueMapCursor < len(m.valueMapDestHint)-1 { m.valueMapCursor++ }
 				return m, nil
 			}
+			if m.focused == 2 && m.valueMapEditing == 0 && len(m.valueMapPairs) > 0 {
+				if m.valueMapCursor < len(m.valueMapPairs)-1 { m.valueMapCursor++ }
+				return m, nil
+			}
 		case "a":
 			if m.focused == 2 && m.valueMapEditing == 0 {
+				m.valueMapInput.Placeholder = "Source value..."
+				m.valueMapEditing = 1
+				m.valueMapInput.Focus()
+				return m, nil
+			}
+		case "e":
+			if m.focused == 2 && m.valueMapEditing == 0 && len(m.valueMapPairs) > 0 && m.valueMapCursor < len(m.valueMapPairs) {
+				m.valueMapInput.SetValue(m.valueMapPairs[m.valueMapCursor].Source)
+				m.valueMapEditIdx = m.valueMapCursor
+				m.valueMapInput.Placeholder = "Source value..."
 				m.valueMapEditing = 1
 				m.valueMapInput.Focus()
 				return m, nil
