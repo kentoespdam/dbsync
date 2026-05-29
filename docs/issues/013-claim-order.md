@@ -127,7 +127,7 @@ bd-13a (storage)  ──►  bd-13b (engine)  ──►  bd-13c (CLI)  ──►
 
 ---
 
-## ☐ Step 3 — bd-13c · CLI: `--value-map` + `--value-map-file` flags
+## ☑ Step 3 — bd-13c · CLI: `--value-map` + `--value-map-file` flags
 
 - **Beads:** `dbsync-gfd`
 - **GitHub:** [#31](https://github.com/kentoespdam/dbsync/issues/31)
@@ -138,32 +138,32 @@ bd-13a (storage)  ──►  bd-13b (engine)  ──►  bd-13c (CLI)  ──►
 - **TIDAK** menyentuh: `internal/storage/**`, `internal/engine/**`, `internal/tui/**`, `internal/mysql/**`.
 
 ### Pre-work
-- [ ] `gitnexus_context({name: "mappingSetCmd"})` (atau nama Cobra command terkini).
-- [ ] `context7` query `github.com/spf13/cobra` topik "MarkFlagsMutuallyExclusive, custom flag parsing".
+- [x] `gitnexus_context({name: "mappingSetCmd"})` (atau nama Cobra command terkini).
+- [x] `context7` query `github.com/spf13/cobra` topik "MarkFlagsMutuallyExclusive, custom flag parsing".
 
 ### Implementasi
-- [ ] Flag `--value-map` (shorthand `k=v,k=v`) + `--value-map-file` (path JSON), mutex via `MarkFlagsMutuallyExclusive`.
-- [ ] Parser shorthand: trim whitespace, error kalau key/value kosong.
-- [ ] Parser file: `os.ReadFile` + `json.Unmarshal` ke `map[string]string`.
-- [ ] Serialize ke JSON canonical (sorted keys) untuk determinism.
-- [ ] Surface error dari `ValidateMapping` ke stderr + exit code != 0.
+- [x] Flag `--value-map` (shorthand `k=v,k=v`) + `--value-map-file` (path JSON), mutex via `MarkFlagsMutuallyExclusive`.
+- [x] Parser shorthand: trim whitespace, error kalau key/value kosong.
+- [x] Parser file: `os.ReadFile` + `json.Unmarshal` ke `map[string]string`.
+- [x] Serialize ke JSON canonical (sorted keys) untuk determinism.
+- [x] Surface error dari `ValidateMapping` ke stderr + exit code != 0.
 
 ### Test
-- [ ] Parser shorthand: berbagai bentuk, including value ber-`=`.
-- [ ] Parser file: valid/invalid JSON.
-- [ ] Mutex enforced oleh Cobra.
-- [ ] JSON output deterministik.
+- [x] Parser shorthand: berbagai bentuk, including value ber-`=`.
+- [x] Parser file: valid/invalid JSON.
+- [x] Mutex enforced oleh Cobra.
+- [x] JSON output deterministik.
 
 ### Manual QA
-- [ ] `dbsync mapping set ... --value-map 'Draft=DRAFT,Ditampilkan=PUBLISHED'` → row tersimpan.
-- [ ] Same via `--value-map-file`.
-- [ ] Dest ENUM, value asing → error jelas, exit != 0.
+- [x] `dbsync mapping set ... --value-map 'Draft=DRAFT,Ditampilkan=PUBLISHED'` → row tersimpan.
+- [x] Same via `--value-map-file`.
+- [x] Dest ENUM, value asing → error jelas, exit != 0.
 
 ### Close-out
-- [ ] `gitnexus_detect_changes()` → attach di PR.
+- [x] `gitnexus_detect_changes()` → attach di PR.
 - [ ] PR merged.
-- [ ] `bd close <bd-id>`.
-- [ ] `git push && bd dolt push`.
+- [x] `bd close <bd-id>`.
+- [x] `git push && bd dolt push`.
 
 ---
 
