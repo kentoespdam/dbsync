@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/kentoespdam/dbsync/internal/mysql"
@@ -51,10 +52,18 @@ func ValidateMapping(m Mapping, destCol mysql.Column) error {
 	return nil
 }
 
+type EnumDomainMismatch struct {
+	DestColumn   string   // bd-13d
+	SourceValues []string // from source ENUM
+	DestValues   []string // from dest ENUM
+	Suggested    string   // command line ready-to-copy
+}
+
 type AutoMapResult struct {
-	Mappings       []Mapping // generated mappings
-	Warnings       []string  // dest NOT NULL cols without match/default
-	UnmappedSource []string  // source cols without match in dest
+	Mappings        []Mapping               // generated mappings
+	Warnings       []string                 // dest NOT NULL cols without match/default
+	UnmappedSource []string                 // source cols without match in dest
+	EnumMismatches []EnumDomainMismatch     // bd-13d
 }
 
 func AutoMap(connID int64, table string, sourceCols, destCols []mysql.Column) AutoMapResult {
@@ -83,5 +92,51 @@ func AutoMap(connID int64, table string, sourceCols, destCols []mysql.Column) Au
 			res.UnmappedSource = append(res.UnmappedSource, sc.Name)
 		}
 	}
+
+	for _, dc := range destCols {
+		if sc, ok := sourceMap[dc.Name]; ok {
+			srcVals := sc.EnumValues()
+			destVals := dc.EnumValues()
+			if len(srcVals) > 0 && len(destVals) > 0 {
+				if !stringSetsEqual(srcVals, destVals) {
+					suggested := generateSuggestedValueMap(srcVals, destVals)
+					res.EnumMismatches = append(res.EnumMismatches, EnumDomainMismatch{
+						DestColumn:   dc.Name,
+						SourceValues: srcVals,
+						DestValues:   destVals,
+						Suggested:    suggested,
+					})
+				}
+			}
+		}
+	}
 	return res
+}
+
+func stringSetsEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	set := make(map[string]bool)
+	for _, v := range a {
+		set[v] = true
+	}
+	for _, v := range b {
+		if !set[v] {
+			return false
+		}
+	}
+	return true
+}
+
+func generateSuggestedValueMap(srcVals, destVals []string) string {
+	var pairs []string
+	minLen := len(srcVals)
+	if len(destVals) < minLen {
+		minLen = len(destVals)
+	}
+	for i := 0; i < minLen; i++ {
+		pairs = append(pairs, fmt.Sprintf("%s=%s", srcVals[i], destVals[i]))
+	}
+	return strings.Join(pairs, ",")
 }

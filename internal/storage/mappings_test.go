@@ -380,3 +380,117 @@ func TestAutoMap(t *testing.T) {
 		})
 	}
 }
+
+func TestAutoMapEnumMismatch(t *testing.T) {
+	connID := int64(1)
+	table := "test"
+
+	tests := []struct {
+		name            string
+		sourceCols      []mysql.Column
+		destCols        []mysql.Column
+		wantMismatch    int
+		expectedSuggest  string
+	}{
+		{
+			name: "Identical domain case",
+			sourceCols: []mysql.Column{
+				{Name: "status", ColumnType: "enum('DRAFT','PUBLISHED','DELETED')"},
+			},
+			destCols: []mysql.Column{
+				{Name: "status", ColumnType: "enum('DRAFT','PUBLISHED','DELETED')"},
+			},
+			wantMismatch:   0,
+		},
+		{
+			name: "Different case",
+			sourceCols: []mysql.Column{
+				{Name: "status", ColumnType: "enum('Draft','Ditampilkan')"},
+			},
+			destCols: []mysql.Column{
+				{Name: "status", ColumnType: "enum('DRAFT','PUBLISHED')"},
+			},
+			wantMismatch:    1,
+			expectedSuggest:  "Draft=DRAFT,Ditampilkan=PUBLISHED",
+		},
+		{
+			name: "Dest superset",
+			sourceCols: []mysql.Column{
+				{Name: "status", ColumnType: "enum('Draft','Ditampilkan')"},
+			},
+			destCols: []mysql.Column{
+				{Name: "status", ColumnType: "enum('DRAFT','PUBLISHED','DELETED')"},
+			},
+			wantMismatch:    1,
+			expectedSuggest: "Draft=DRAFT,Ditampilkan=PUBLISHED",
+		},
+		{
+			name: "Source superset",
+			sourceCols: []mysql.Column{
+				{Name: "status", ColumnType: "enum('A','B','C')"},
+			},
+			destCols: []mysql.Column{
+				{Name: "status", ColumnType: "enum('A','B')"},
+			},
+			wantMismatch:    1,
+			expectedSuggest: "A=A,B=B",
+		},
+		{
+			name: "One not ENUM",
+			sourceCols: []mysql.Column{
+				{Name: "status", ColumnType: "enum('Draft','Ditampilkan')"},
+			},
+			destCols: []mysql.Column{
+				{Name: "name", ColumnType: "varchar(255)"},
+			},
+			wantMismatch: 0,
+		},
+		{
+			name: "Both not ENUM",
+			sourceCols: []mysql.Column{
+				{Name: "name", ColumnType: "varchar(255)"},
+			},
+			destCols: []mysql.Column{
+				{Name: "name", ColumnType: "varchar(255)"},
+			},
+			wantMismatch: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res := AutoMap(connID, table, tt.sourceCols, tt.destCols)
+			if len(res.EnumMismatches) != tt.wantMismatch {
+				t.Errorf("got %d mismatches, want %d", len(res.EnumMismatches), tt.wantMismatch)
+			}
+
+			if tt.wantMismatch > 0 {
+				mismatch := res.EnumMismatches[0]
+				if mismatch.DestColumn != tt.destCols[0].Name {
+					t.Errorf("DestColumn = %s, want %s", mismatch.DestColumn, tt.destCols[0].Name)
+				}
+				if !stringSlicesEqual(mismatch.SourceValues, tt.sourceCols[0].EnumValues()) {
+					t.Errorf("SourceValues = %v, want %v", mismatch.SourceValues, tt.sourceCols[0].EnumValues())
+				}
+				if !stringSlicesEqual(mismatch.DestValues, tt.destCols[0].EnumValues()) {
+					t.Errorf("DestValues = %v, want %v", mismatch.DestValues, tt.destCols[0].EnumValues())
+				}
+				if mismatch.Suggested != tt.expectedSuggest {
+					t.Errorf("Suggested = %s, want %s", mismatch.Suggested, tt.expectedSuggest)
+				}
+			}
+		})
+	}
+}
+
+func stringSlicesEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}

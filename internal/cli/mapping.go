@@ -115,6 +115,17 @@ var mappingAutoCmd = &cobra.Command{
 			}
 		}
 
+		if len(res.EnumMismatches) > 0 {
+			fmt.Printf("\n⚠ %d dest column has ENUM domain mismatch with source:\n", len(res.EnumMismatches))
+			for _, mismatch := range res.EnumMismatches {
+				fmt.Printf("  - %s:\n", mismatch.DestColumn)
+				fmt.Printf("    source: [%s]\n", strings.Join(mismatch.SourceValues, ", "))
+				fmt.Printf("    dest:   [%s]\n", strings.Join(mismatch.DestValues, ", "))
+				fmt.Printf("    Run: dbsync mapping set --connection=%s --table=%s --dest=%s --value-map='%s'\n", 
+					mappingConnName, mappingTable, mismatch.DestColumn, mismatch.Suggested)
+			}
+		}
+
 		if len(res.UnmappedSource) > 0 {
 			fmt.Printf("\nℹ %d source columns not mapped to destination:\n", len(res.UnmappedSource))
 			for _, c := range res.UnmappedSource {
