@@ -70,7 +70,7 @@ func (m mappingEditFormModel) View() string {
 				vmContent.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render(" tab: switch • ↑↓: choose") + "\n")
 			}
 		} else if m.focused == 2 {
-			vmContent.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render(" a: add  x: remove") + "\n")
+			vmContent.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render(" a: add  e: edit  x: remove  ↑↓: browse") + "\n")
 		}
 
 		s.WriteString(vmStyle.Render(strings.TrimRight(vmContent.String(), "\n")) + "\n")

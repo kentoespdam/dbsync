@@ -65,6 +65,7 @@ type mappingEditFormModel struct {
 	valueMapPairs   []ValueMapPair
 	valueMapCursor  int
 	valueMapEditing int // 0: none, 1: source, 2: dest
+	valueMapEditIdx int // -1 = new, >=0 = replace pair index
 	valueMapInput   textinput.Model
 	valueMapDestHint []string
 
@@ -135,8 +136,9 @@ func (m *mappingEditFormModel) initValueMap(mrg storage.Mapping, destCol mysql.C
 		m.hasValueMap = true
 		m.valueMapDestHint = enums
 		m.valueMapInput = textinput.New()
-		m.valueMapInput.Placeholder = "Dest value..."
+		m.valueMapInput.Placeholder = "Source value..."
 		m.valueMapInput.Width = 20
+		m.valueMapEditIdx = -1
 
 		if mrg.ValueMap.Valid {
 			var vmap map[string]string
