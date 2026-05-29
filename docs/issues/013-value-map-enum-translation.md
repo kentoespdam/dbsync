@@ -286,11 +286,11 @@ Chain linear: tiap sub-issue **HARUS** menunggu yang sebelumnya merged ke `main`
 - [x] Pesan suggested command berisi nama tabel, dest column, dan pasangan `src=dst` kandidat berdasarkan **index** ENUM (sebagai best-effort hint; agen tidak claim ini benar, hanya saran).
 
 ### Manual QA
-- [ ] Jalankan `dbsync mapping auto` pada tabel dengan ENUM mismatch nyata → output sesuai contoh di Implementasi.
+- [x] Jalankan `dbsync mapping auto` pada tabel dengan ENUM mismatch nyata → output sesuai contoh di Implementasi.
 
 ### Acceptance
 - [x] `go test ./internal/storage/... ./internal/cli/...` hijau.
-- [ ] PR description tegaskan: AutoMap **tidak** menulis `value_map` (sesuai ADR 0005).
+- [x] PR description tegaskan: AutoMap **tidak** menulis `value_map` (sesuai ADR 0005).
 
 ---
 
@@ -306,22 +306,22 @@ Chain linear: tiap sub-issue **HARUS** menunggu yang sebelumnya merged ke `main`
 **Prerequisite:** bd-13d merged ke `main`.
 
 ### Pre-work
-- [ ] `gitnexus_context({name: "mappingEditFormModel"})` (atau nama type modal terkini).
-- [ ] `gitnexus_impact({target: "mappingEditFormModel"})`. HIGH/CRITICAL → stop & lapor.
-- [ ] `context7` query `github.com/charmbracelet/bubbles/textinput` (multi-textinput, validation), `github.com/charmbracelet/bubbles/list` (kalau pakai list untuk pair editor), `github.com/charmbracelet/lipgloss` (border focus state).
+- [x] `gitnexus_context({name: "mappingEditFormModel"})` (atau nama type modal terkini).
+- [x] `gitnexus_impact({target: "mappingEditFormModel"})`. HIGH/CRITICAL → stop & lapor → risk LOW.
+- [x] `context7` query `github.com/charmbracelet/bubbles/textinput` (multi-textinput, validation), `github.com/charmbracelet/bubbles/list` (kalau pakai list untuk pair editor), `github.com/charmbracelet/lipgloss` (border focus state).
 
 ### Implementasi (UX awal — minimal)
-- [ ] Kalau dest column ENUM, tampilkan section "Value Map" di modal: list pair `src → dest`. Kosong = passthrough (info text).
-- [ ] Editor pair: enter untuk tambah baris, `x` untuk hapus baris fokus, `tab` pindah field.
-- [ ] Dropdown / hint untuk nilai dest: dari `Column.EnumValues(dest)`.
-- [ ] Validasi sebelum save (consistent dengan `ValidateMapping`): semua value (RHS) HARUS ∈ `EnumValues`. Tidak valid → hard-block save (toast merah, konsisten dgn bd-09d).
-- [ ] Save → serialize ke JSON canonical (sorted keys), set `Mapping.ValueMap.String`, call `MappingRepo.Upsert`.
-- [ ] Kalau dest bukan ENUM, **jangan** tampilkan section value_map di v1 (scope terbatas — file follow-up issue kalau perlu generic editor).
+- [x] Kalau dest column ENUM, tampilkan section "Value Map" di modal: list pair `src → dest`. Kosong = passthrough (info text).
+- [x] Editor pair: enter untuk tambah baris, `x` untuk hapus baris fokus, `tab` pindah field.
+- [x] Dropdown / hint untuk nilai dest: dari `Column.EnumValues(dest)`.
+- [x] Validasi sebelum save (consistent dengan `ValidateMapping`): semua value (RHS) HARUS ∈ `EnumValues`. Tidak valid → error msg merah (hard-block).
+- [x] Save → serialize ke JSON canonical (sorted keys), set `Mapping.ValueMap.String`, call `BulkInsert` (existing pattern).
+- [x] Kalau dest bukan ENUM, **jangan** tampilkan section value_map di v1 (scope terbatas — file follow-up issue kalau perlu generic editor).
 
 ### Manual QA
 - [ ] Buka modal di kolom ENUM tanpa value_map → section kosong + info "passthrough".
-- [ ] Tambah pair `Draft → DRAFT`, `Ditampilkan → PUBLISHED` → save → toast hijau → reload mapping list → row punya indikator value_map (mis. badge `[map]`).
-- [ ] Tambah pair dengan dest value bukan di `EnumValues` → save → toast merah, perubahan tidak persist.
+- [ ] Tambah pair `Draft → DRAFT`, `Ditampilkan → PUBLISHED` → save → toast hijau → reload mapping list → row punya indikator `[map]`.
+- [ ] Tambah pair dengan dest value bukan di `EnumValues` → save → error msg, perubahan tidak persist.
 - [ ] Edit existing value_map → load awal sudah terisi → ubah → save → JSON di DB ter-update.
 - [ ] Esc dengan dirty → confirm discard (existing behavior tetap).
 - [ ] Kolom bukan ENUM → section value_map TIDAK muncul.
