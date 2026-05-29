@@ -245,11 +245,11 @@ Chain linear: tiap sub-issue **HARUS** menunggu yang sebelumnya merged ke `main`
 **Prerequisite:** bd-13c merged ke `main`.
 
 ### Pre-work
-- [ ] `gitnexus_context({name: "AutoMap"})` + `gitnexus_impact({target: "AutoMap"})`.
-- [ ] Tidak perlu `context7` (pure Go). Sebutkan di PR.
+- [x] `gitnexus_context({name: "AutoMap"})` + `gitnexus_impact({target: "AutoMap"})`.
+- [x] Tidak perlu `context7` (pure Go). Sebutkan di PR.
 
 ### Implementasi
-- [ ] Extend `AutoMapResult`:
+- [x] Extend `AutoMapResult`:
   ```go
   type EnumDomainMismatch struct {
       DestColumn   string
@@ -265,10 +265,10 @@ Chain linear: tiap sub-issue **HARUS** menunggu yang sebelumnya merged ke `main`
       EnumMismatches  []EnumDomainMismatch // bd-13d
   }
   ```
-- [ ] Logika di `AutoMap`: untuk tiap mapping di mana source & dest dua-duanya ENUM dan `EnumValues` set, bandingkan set source vs dest. Kalau **tidak identik** (set equality), append `EnumDomainMismatch`.
-- [ ] `Suggested` command (set saat AutoMap belum tahu connection name → biarkan placeholder `<CONN>`, atau caller di CLI yang substitusi). Pilih opsi B: caller substitusi nama connection sebelum print.
-- [ ] `AutoMap` tetap **TIDAK** auto-generate `value_map` (locked di ADR 0005). Hanya laporan.
-- [ ] CLI `mapping auto`: setelah print warnings existing, kalau `EnumMismatches` non-empty, print blok actionable:
+- [x] Logika di `AutoMap`: untuk tiap mapping di mana source & dest dua-duanya ENUM dan `EnumValues` set, bandingkan set source vs dest. Kalau **tidak identik** (set equality), append `EnumDomainMismatch`.
+- [x] `Suggested` command (set saat AutoMap belum tahu connection name → biarkan placeholder `<CONN>`, atau caller di CLI yang substitusi). Pilih opsi B: caller substitusi nama connection sebelum print.
+- [x] `AutoMap` tetap **TIDAK** auto-generate `value_map` (locked di ADR 0005). Hanya laporan.
+- [x] CLI `mapping auto`: setelah print warnings existing, kalau `EnumMismatches` non-empty, print blok actionable:
   ```
   ⚠ 1 dest column has ENUM domain mismatch with source:
     - articles.status:
@@ -279,17 +279,17 @@ Chain linear: tiap sub-issue **HARUS** menunggu yang sebelumnya merged ke `main`
   ```
 
 ### Test
-- [ ] Identik domain (case sama) → tidak ada mismatch.
-- [ ] Beda case (`Draft` vs `DRAFT`) → mismatch tercatat.
-- [ ] Dest superset (`Draft` ⊂ `DRAFT,PUBLISHED,DELETED`) → mismatch tercatat (karena set tidak sama).
-- [ ] Salah satu kolom bukan ENUM → tidak masuk `EnumMismatches`.
-- [ ] Pesan suggested command berisi nama tabel, dest column, dan pasangan `src=dst` kandidat berdasarkan **index** ENUM (sebagai best-effort hint; agen tidak claim ini benar, hanya saran).
+- [x] Identik domain (case sama) → tidak ada mismatch.
+- [x] Beda case (`Draft` vs `DRAFT`) → mismatch tercatat.
+- [x] Dest superset (`Draft` ⊂ `DRAFT,PUBLISHED,DELETED`) → mismatch tercatat (karena set tidak sama).
+- [x] Salah satu kolom bukan ENUM → tidak masuk `EnumMismatches`.
+- [x] Pesan suggested command berisi nama tabel, dest column, dan pasangan `src=dst` kandidat berdasarkan **index** ENUM (sebagai best-effort hint; agen tidak claim ini benar, hanya saran).
 
 ### Manual QA
 - [ ] Jalankan `dbsync mapping auto` pada tabel dengan ENUM mismatch nyata → output sesuai contoh di Implementasi.
 
 ### Acceptance
-- [ ] `go test ./internal/storage/... ./internal/cli/...` hijau.
+- [x] `go test ./internal/storage/... ./internal/cli/...` hijau.
 - [ ] PR description tegaskan: AutoMap **tidak** menulis `value_map` (sesuai ADR 0005).
 
 ---

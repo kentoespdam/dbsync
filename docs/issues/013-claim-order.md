@@ -178,26 +178,27 @@ bd-13a (storage)  ──►  bd-13b (engine)  ──►  bd-13c (CLI)  ──►
 - **TIDAK** menyentuh: `internal/engine/**`, `internal/tui/**`, `internal/mysql/**` (selain konsumsi `EnumValues`).
 
 ### Pre-work
-- [ ] `gitnexus_context({name: "AutoMap"})` + `gitnexus_impact({target: "AutoMap"})`.
+- [x] `gitnexus_context({name: "AutoMap"})` + `gitnexus_impact({target: "AutoMap"})`.
 
 ### Implementasi
-- [ ] Tambah type `EnumDomainMismatch` + field `EnumMismatches` di `AutoMapResult`.
-- [ ] `AutoMap` deteksi: source & dest dua-duanya ENUM, set tidak identik → append mismatch.
-- [ ] **JANGAN** auto-generate `value_map` (lock ADR 0005).
-- [ ] CLI handler `mapping auto`: print blok actionable dengan suggested command lengkap (`--connection=`, `--table=`, `--dest=`, `--value-map='…'`).
+- [x] Tambah type `EnumDomainMismatch` + field `EnumMismatches` di `AutoMapResult`.
+- [x] `AutoMap` deteksi: source & dest dua-duanya ENUM, set tidak identik → append mismatch.
+- [x] **JANGAN** auto-generate `value_map` (lock ADR 0005).
+- [x] CLI handler `mapping auto`: print blok actionable dengan suggested command lengkap (`--connection=`, `--table=`, `--dest=`, `--value-map='…'`).
 
 ### Test
-- [ ] Domain identik → 0 mismatch.
-- [ ] Beda case → tercatat.
-- [ ] Dest superset → tercatat.
-- [ ] Salah satu non-ENUM → tidak masuk.
-- [ ] Suggested command berisi pasangan berbasis index sebagai best-effort.
+- [x] Domain identik → 0 mismatch.
+- [x] Beda case → tercatat.
+- [x] Dest superset → tercatat.
+- [x] Source superset → tercatat.
+- [x] Salah satu non-ENUM → tidak masuk.
+- [x] Suggested command berisi pasangan berbasis index sebagai best-effort.
 
 ### Manual QA
 - [ ] `dbsync mapping auto` di tabel mismatch nyata → output sesuai contoh di plan.
 
 ### Close-out
-- [ ] `gitnexus_detect_changes()` → attach di PR.
+- [x] `gitnexus_detect_changes()` → attach di PR.
 - [ ] PR merged.
 - [ ] `bd close <bd-id>`.
 - [ ] `git push && bd dolt push`.
