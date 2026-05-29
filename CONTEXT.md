@@ -94,6 +94,16 @@ Snapshot 2026-05-27: `bd-09` series completed. Issue 009 finalized.
 
 ## Glossary
 
+- **Value Map** — translasi 1:1 antara domain value source dan dest untuk satu
+  `(connection, table, dest_column)`. Disimpan sebagai JSON `{src:dest}` di
+  `mappings.value_map` (TEXT, `CHECK json_valid`). Orthogonal dengan
+  `default_value`: `default_value` dipakai saat row source NULL; `value_map`
+  dipakai saat row source ada nilainya. Tanpa `value_map` → passthrough
+  (backward-compat). Lookup miss → row di-log via `internal/logger` (JSONL),
+  batch lanjut, sync exit code 1 — konsisten dgn filosofi "auditable" dan
+  [ADR 0003](docs/adr/0003-remove-mysql-error-redaction.md). Validasi storage:
+  kalau dest kolom ENUM, semua *value* map harus ∈ `Column.EnumValues(dest)`;
+  kalau dest bukan ENUM, no check.
 - **Test Connection** — dua jalur, semantik beda:
   1. *Form test* (`connFormModel.testSource/testDest` di `internal/tui/conn_form.go`) — validasi credential yang user **sedang ketik** di form, dipicu saat tekan Enter di field terakhir. Sukses → langsung lanjut save. Gagal → prompt "Save anyway? (y/N)". Tidak menampilkan layar hasil.
   2. *List test* (`connTestModel.testAll` di `internal/tui/conn_check.go`) — re-test koneksi **yang sudah tersimpan**, password didekripsi dari SQLite. Dipicu dari list connection dengan tombol `t`. Tampilkan status `✓ OK` / `✗ <error>` untuk Source dan Dest, lalu tekan key apa pun untuk balik. Error MySQL ditampilkan apa adanya (password connection sudah di-redact di `mysql/pool.go`).
@@ -108,6 +118,7 @@ Snapshot 2026-05-27: `bd-09` series completed. Issue 009 finalized.
 | Detail issue | `docs/issues/00N-*.md` |
 | Distribusi & rilis | `docs/adr/0002-cross-platform-binary-distribution.md` |
 | Kenapa error MySQL tidak di-redact | `docs/adr/0003-remove-mysql-error-redaction.md` |
+| Kenapa pakai Value Map untuk translasi ENUM | `docs/adr/0005-value-map-for-enum-translation.md` |
 | Aturan agent | `CLAUDE.md` |
 | GitHub mirror | https://github.com/kentoespdam/dbsync/issues |
 
