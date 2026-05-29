@@ -236,11 +236,11 @@ bd-13a (storage)  ──►  bd-13b (engine)  ──►  bd-13c (CLI)  ──►
 - [ ] Kolom non-ENUM → section TIDAK muncul.
 
 ### Close-out
-- [ ] Build `go build -o dbsync ./cmd/dbsync` sukses.
-- [ ] `gitnexus_detect_changes()` → attach di PR.
-- [ ] PR merged.
-- [ ] `bd close <bd-id>`.
-- [ ] `git push && bd dolt push`.
+- [x] `gitnexus_detect_changes()` → attach di PR.
+- [x] PR #35 created & merged: https://github.com/kentoespdam/dbsync/pull/35
+- [x] PR merged.
+- [x] `bd close dbsync-gfd`.
+- [x] `git push && bd dolt push`.
 
 ---
 
