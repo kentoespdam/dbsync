@@ -148,6 +148,130 @@ func TestMappingRepo(t *testing.T) {
 			t.Error("Mappings should have been deleted by FK CASCADE")
 		}
 	})
+
+	t.Run("ValueMap Round-trip", func(t *testing.T) {
+		// Need a new connection since the old one was deleted by FK CASCADE test
+		cID, _ := connRepo.Insert(ctx, Connection{
+			Name: "test-conn-vmap", SourceHost: "h", SourceUser: "u", SourcePassword: "p", SourceDB: "s",
+			DestHost: "h", DestUser: "u", DestPassword: "p", DestDB: "d",
+		})
+
+		vmapJSON := `{"Draft":"DRAFT","Ditampilkan":"PUBLISHED"}`
+		m := Mapping{
+			ConnectionID: cID,
+			TableName:    "articles",
+			SourceColumn: sql.NullString{String: "status", Valid: true},
+			DestColumn:   "status",
+			ValueMap:     sql.NullString{String: vmapJSON, Valid: true},
+		}
+
+		_, err := mappingRepo.Insert(ctx, m)
+		if err != nil {
+			t.Fatalf("Insert with ValueMap failed: %v", err)
+		}
+
+		mappings, err := mappingRepo.ListByTable(ctx, cID, "articles")
+		if err != nil {
+			t.Fatalf("ListByTable failed: %v", err)
+		}
+		if len(mappings) != 1 {
+			t.Fatalf("Expected 1 mapping, got %d", len(mappings))
+		}
+		if !mappings[0].ValueMap.Valid || mappings[0].ValueMap.String != vmapJSON {
+			t.Errorf("ValueMap round-trip failed: got %q, want %q", mappings[0].ValueMap.String, vmapJSON)
+		}
+
+		// Test Upsert overwrite
+		newVmap := `{"Draft":"DRAFT"}`
+		m.ValueMap.String = newVmap
+		err = mappingRepo.Upsert(ctx, m)
+		if err != nil {
+			t.Fatalf("Upsert overwrite ValueMap failed: %v", err)
+		}
+		mappings, _ = mappingRepo.ListByTable(ctx, cID, "articles")
+		if mappings[0].ValueMap.String != newVmap {
+			t.Errorf("Upsert ValueMap update failed: got %q, want %q", mappings[0].ValueMap.String, newVmap)
+		}
+	})
+
+	t.Run("ValueMap JSON Check", func(t *testing.T) {
+		cID, _ := connRepo.Insert(ctx, Connection{
+			Name: "test-conn-vmap-check", SourceHost: "h", SourceUser: "u", SourcePassword: "p", SourceDB: "s",
+			DestHost: "h", DestUser: "u", DestPassword: "p", DestDB: "d",
+		})
+		m := Mapping{
+			ConnectionID: cID,
+			TableName:    "err",
+			DestColumn:   "c",
+			ValueMap:     sql.NullString{String: "invalid json", Valid: true},
+		}
+		_, err := mappingRepo.Insert(ctx, m)
+		if err == nil {
+			t.Error("Expected error from CHECK constraint for invalid JSON")
+		}
+	})
+}
+
+func TestValidateMapping(t *testing.T) {
+	enumCol := mysql.Column{
+		Name:       "status",
+		ColumnType: "enum('DRAFT','PUBLISHED','DELETED')",
+	}
+	nonEnumCol := mysql.Column{
+		Name:       "name",
+		ColumnType: "varchar(255)",
+	}
+
+	tests := []struct {
+		name    string
+		vmap    string
+		destCol mysql.Column
+		wantErr bool
+	}{
+		{
+			name:    "Valid ENUM values",
+			vmap:    `{"Draft":"DRAFT","Pub":"PUBLISHED"}`,
+			destCol: enumCol,
+			wantErr: false,
+		},
+		{
+			name:    "Invalid ENUM value",
+			vmap:    `{"Draft":"DRAFT","X":"UNKNOWN"}`,
+			destCol: enumCol,
+			wantErr: true,
+		},
+		{
+			name:    "Non-ENUM column",
+			vmap:    `{"a":"b"}`,
+			destCol: nonEnumCol,
+			wantErr: false,
+		},
+		{
+			name:    "Invalid JSON",
+			vmap:    `{invalid}`,
+			destCol: enumCol,
+			wantErr: true,
+		},
+		{
+			name:    "Empty ValueMap",
+			vmap:    "",
+			destCol: enumCol,
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := Mapping{DestColumn: tt.destCol.Name}
+			if tt.vmap != "" {
+				m.ValueMap = sql.NullString{String: tt.vmap, Valid: true}
+			}
+			err := ValidateMapping(m, tt.destCol)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateMapping() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
 }
 
 func TestAutoMap(t *testing.T) {

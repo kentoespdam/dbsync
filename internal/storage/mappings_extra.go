@@ -7,18 +7,19 @@ import (
 )
 
 func (r *MappingRepo) Upsert(ctx context.Context, m Mapping) error {
-	if !m.SourceColumn.Valid && !m.DefaultValue.Valid {
-		return fmt.Errorf("mapping must have at least a source column or a default value")
+	if !m.SourceColumn.Valid && !m.DefaultValue.Valid && !m.ValueMap.Valid {
+		return fmt.Errorf("mapping must have at least a source column, default value, or value map")
 	}
 
 	query := `
-		INSERT INTO sync_column_mappings (connection_id, table_name, source_column, dest_column, default_value)
-		VALUES (?, ?, ?, ?, ?)
+		INSERT INTO sync_column_mappings (connection_id, table_name, source_column, dest_column, default_value, value_map)
+		VALUES (?, ?, ?, ?, ?, ?)
 		ON CONFLICT (connection_id, table_name, dest_column) DO UPDATE SET
 			source_column = excluded.source_column,
-			default_value = excluded.default_value
+			default_value = excluded.default_value,
+			value_map = excluded.value_map
 	`
-	_, err := r.db.ExecContext(ctx, query, m.ConnectionID, m.TableName, m.SourceColumn, m.DestColumn, m.DefaultValue)
+	_, err := r.db.ExecContext(ctx, query, m.ConnectionID, m.TableName, m.SourceColumn, m.DestColumn, m.DefaultValue, m.ValueMap)
 	return err
 }
 

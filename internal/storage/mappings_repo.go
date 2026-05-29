@@ -15,15 +15,15 @@ func (d *DB) Mappings() *MappingRepo {
 }
 
 func (r *MappingRepo) Insert(ctx context.Context, m Mapping) (int64, error) {
-	if !m.SourceColumn.Valid && !m.DefaultValue.Valid {
-		return 0, fmt.Errorf("mapping must have at least a source column or a default value")
+	if !m.SourceColumn.Valid && !m.DefaultValue.Valid && !m.ValueMap.Valid {
+		return 0, fmt.Errorf("mapping must have at least a source column, default value, or value map")
 	}
 
 	query := `
-		INSERT INTO sync_column_mappings (connection_id, table_name, source_column, dest_column, default_value)
-		VALUES (?, ?, ?, ?, ?)
+		INSERT INTO sync_column_mappings (connection_id, table_name, source_column, dest_column, default_value, value_map)
+		VALUES (?, ?, ?, ?, ?, ?)
 	`
-	res, err := r.db.ExecContext(ctx, query, m.ConnectionID, m.TableName, m.SourceColumn, m.DestColumn, m.DefaultValue)
+	res, err := r.db.ExecContext(ctx, query, m.ConnectionID, m.TableName, m.SourceColumn, m.DestColumn, m.DefaultValue, m.ValueMap)
 	if err != nil {
 		return 0, err
 	}
@@ -35,14 +35,14 @@ func (r *MappingRepo) BulkInsert(ctx context.Context, ms []Mapping) error {
 	if err != nil { return err }
 	defer tx.Rollback()
 
-	query := `INSERT INTO sync_column_mappings (connection_id, table_name, source_column, dest_column, default_value) VALUES (?, ?, ?, ?, ?)`
+	query := `INSERT INTO sync_column_mappings (connection_id, table_name, source_column, dest_column, default_value, value_map) VALUES (?, ?, ?, ?, ?, ?)`
 	stmt, err := tx.PrepareContext(ctx, query)
 	if err != nil { return err }
 	defer stmt.Close()
 
 	for _, m := range ms {
-		if !m.SourceColumn.Valid && !m.DefaultValue.Valid { continue }
-		if _, err := stmt.ExecContext(ctx, m.ConnectionID, m.TableName, m.SourceColumn, m.DestColumn, m.DefaultValue); err != nil {
+		if !m.SourceColumn.Valid && !m.DefaultValue.Valid && !m.ValueMap.Valid { continue }
+		if _, err := stmt.ExecContext(ctx, m.ConnectionID, m.TableName, m.SourceColumn, m.DestColumn, m.DefaultValue, m.ValueMap); err != nil {
 			return err
 		}
 	}
@@ -51,7 +51,7 @@ func (r *MappingRepo) BulkInsert(ctx context.Context, ms []Mapping) error {
 
 func (r *MappingRepo) ListByTable(ctx context.Context, connID int64, table string) ([]Mapping, error) {
 	query := `
-		SELECT id, connection_id, table_name, source_column, dest_column, default_value, created_at
+		SELECT id, connection_id, table_name, source_column, dest_column, default_value, value_map, created_at
 		FROM sync_column_mappings
 		WHERE connection_id = ? AND table_name = ?
 		ORDER BY dest_column ASC
@@ -63,7 +63,7 @@ func (r *MappingRepo) ListByTable(ctx context.Context, connID int64, table strin
 	var mappings []Mapping
 	for rows.Next() {
 		var m Mapping
-		if err := rows.Scan(&m.ID, &m.ConnectionID, &m.TableName, &m.SourceColumn, &m.DestColumn, &m.DefaultValue, &m.CreatedAt); err != nil {
+		if err := rows.Scan(&m.ID, &m.ConnectionID, &m.TableName, &m.SourceColumn, &m.DestColumn, &m.DefaultValue, &m.ValueMap, &m.CreatedAt); err != nil {
 			return nil, err
 		}
 		mappings = append(mappings, m)

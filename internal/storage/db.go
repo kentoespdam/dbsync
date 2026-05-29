@@ -37,6 +37,12 @@ func Open(dbPath string) (*DB, error) {
 }
 
 func (d *DB) runMigrations() error {
+	// Ensure migration tracking table exists (bd-13a)
+	_, err := d.db.Exec(`CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY);`)
+	if err != nil {
+		return fmt.Errorf("failed to create migrations table: %v", err)
+	}
+
 	entries, err := migrationsFS.ReadDir("migrations")
 	if err != nil {
 		return err
@@ -46,6 +52,17 @@ func (d *DB) runMigrations() error {
 		if entry.IsDir() {
 			continue
 		}
+
+		// Check if already run
+		var count int
+		err := d.db.QueryRow("SELECT count(*) FROM _migrations WHERE name = ?", entry.Name()).Scan(&count)
+		if err != nil {
+			return err
+		}
+		if count > 0 {
+			continue
+		}
+
 		content, err := migrationsFS.ReadFile("migrations/" + entry.Name())
 		if err != nil {
 			return err
@@ -53,6 +70,12 @@ func (d *DB) runMigrations() error {
 
 		if _, err := d.db.Exec(string(content)); err != nil {
 			return fmt.Errorf("migration %s failed: %v", entry.Name(), err)
+		}
+
+		// Record migration
+		_, err = d.db.Exec("INSERT INTO _migrations (name) VALUES (?)", entry.Name())
+		if err != nil {
+			return fmt.Errorf("failed to record migration %s: %v", entry.Name(), err)
 		}
 	}
 

@@ -58,7 +58,7 @@ bd-13a (storage)  ──►  bd-13b (engine)  ──►  bd-13c (CLI)  ──►
 
 ---
 
-## ☐ Step 1 — bd-13a · Storage: schema + Mapping.ValueMap + repo CRUD + validation
+## ☑ Step 1 — bd-13a · Storage: schema + Mapping.ValueMap + repo CRUD + validation
 
 - **Beads:** `dbsync-y0g`
 - **GitHub:** [#29](https://github.com/kentoespdam/dbsync/issues/29)
@@ -68,28 +68,28 @@ bd-13a (storage)  ──►  bd-13b (engine)  ──►  bd-13c (CLI)  ──►
 - **TIDAK** menyentuh: `internal/engine/**`, `internal/cli/**`, `internal/tui/**`, `internal/mysql/**`.
 
 ### Pre-work
-- [ ] Baca `CONTEXT.md` + ADR 0005 + section `bd-13a` di plan.
-- [ ] `gitnexus_context({name: "Mapping"})` + `gitnexus_impact({target: "Mapping", direction: "upstream"})`. Catat di PR.
-- [ ] `context7` query `modernc.org/sqlite` topik "ALTER TABLE ADD COLUMN, CHECK json_valid, idempotent migration". Catat di PR.
+- [x] Baca `CONTEXT.md` + ADR 0005 + section `bd-13a` di plan.
+- [x] `gitnexus_context({name: "Mapping"})` + `gitnexus_impact({target: "Mapping", direction: "upstream"})`. Catat di PR.
+- [x] `context7` query `modernc.org/sqlite` topik "ALTER TABLE ADD COLUMN, CHECK json_valid, idempotent migration". Catat di PR.
 
 ### Implementasi
-- [ ] Migrasi additive idempotent `ALTER TABLE mappings ADD COLUMN value_map TEXT CHECK (value_map IS NULL OR json_valid(value_map))`.
-- [ ] Tambah `Mapping.ValueMap sql.NullString` + update SELECT/INSERT/UPSERT konsisten.
-- [ ] Helper `ValidateMapping(m Mapping, destCol mysql.Column) error`: kalau `destCol.EnumValues()` non-empty, semua *value* (RHS) ∈ `EnumValues`. Else skip.
-- [ ] Validasi struct existing (Source/Default/ValueMap min satu) tetap berlaku.
+- [x] Migrasi additive idempotent `ALTER TABLE mappings ADD COLUMN value_map TEXT CHECK (value_map IS NULL OR json_valid(value_map))`.
+- [x] Tambah `Mapping.ValueMap sql.NullString` + update SELECT/INSERT/UPSERT konsisten.
+- [x] Helper `ValidateMapping(m Mapping, destCol mysql.Column) error`: kalau `destCol.EnumValues()` non-empty, semua *value* (RHS) ∈ `EnumValues`. Else skip.
+- [x] Validasi struct existing (Source/Default/ValueMap min satu) tetap berlaku.
 
 ### Test
-- [ ] Round-trip Insert/List dengan & tanpa `value_map`.
-- [ ] Upsert overwrite `value_map`.
-- [ ] CHECK constraint reject JSON invalid.
-- [ ] `ValidateMapping` 3 kasus (valid, miss, non-ENUM).
-- [ ] Backward-compat: existing test tetap hijau **tanpa modifikasi**.
+- [x] Round-trip Insert/List dengan & tanpa `value_map`.
+- [x] Upsert overwrite `value_map`.
+- [x] CHECK constraint reject JSON invalid.
+- [x] `ValidateMapping` 3 kasus (valid, miss, non-ENUM).
+- [x] Backward-compat: existing test tetap hijau **tanpa modifikasi**.
 
 ### Close-out
-- [ ] `gitnexus_detect_changes()` → attach di PR (hanya symbol scope).
+- [x] `gitnexus_detect_changes()` → attach di PR (hanya symbol scope).
 - [ ] PR merged ke `main`.
-- [ ] `bd close <bd-id>`.
-- [ ] `git push && bd dolt push && git status` clean.
+- [x] `bd close <bd-id>`.
+- [x] `git push && bd dolt push && git status` clean.
 
 ---
 
