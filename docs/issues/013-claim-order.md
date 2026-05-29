@@ -167,7 +167,7 @@ bd-13a (storage)  ──►  bd-13b (engine)  ──►  bd-13c (CLI)  ──►
 
 ---
 
-## ☐ Step 4 — bd-13d · Auto-map: deteksi mismatch domain ENUM + hint command
+## ☑ Step 4 — bd-13d · Auto-map: deteksi mismatch domain ENUM + hint command
 
 - **Beads:** `dbsync-cor`
 - **GitHub:** [#32](https://github.com/kentoespdam/dbsync/issues/32)
@@ -195,17 +195,17 @@ bd-13a (storage)  ──►  bd-13b (engine)  ──►  bd-13c (CLI)  ──►
 - [x] Suggested command berisi pasangan berbasis index sebagai best-effort.
 
 ### Manual QA
-- [ ] `dbsync mapping auto` di tabel mismatch nyata → output sesuai contoh di plan.
+- [x] `dbsync mapping auto` di tabel mismatch nyata → output sesuai contoh di plan.
 
 ### Close-out
 - [x] `gitnexus_detect_changes()` → attach di PR.
-- [ ] PR merged.
-- [ ] `bd close <bd-id>`.
-- [ ] `git push && bd dolt push`.
+- [x] PR #36 merged.
+- [x] `bd close dbsync-cor`.
+- [x] `git push && bd dolt push`.
 
 ---
 
-## ☐ Step 5 — bd-13e · TUI: value_map editor di mapping edit form
+## ☑ Step 5 — bd-13e · TUI: value_map editor di mapping edit form
 
 - **Beads:** `dbsync-myy`
 - **GitHub:** [#33](https://github.com/kentoespdam/dbsync/issues/33)
@@ -216,32 +216,31 @@ bd-13a (storage)  ──►  bd-13b (engine)  ──►  bd-13c (CLI)  ──►
 - **TIDAK** menyentuh: `internal/storage/**`, `internal/engine/**`, `internal/cli/**`.
 
 ### Pre-work
-- [ ] `gitnexus_context({name: "mappingEditFormModel"})` (atau nama type modal terkini).
-- [ ] `gitnexus_impact({target: "mappingEditFormModel"})`. HIGH/CRITICAL → STOP & lapor.
-- [ ] `context7` query `github.com/charmbracelet/bubbles/textinput`, `github.com/charmbracelet/bubbles/list`, `github.com/charmbracelet/lipgloss`.
+- [x] `gitnexus_context({name: "mappingEditFormModel"})` (atau nama type modal terkini).
+- [x] `gitnexus_impact({target: "mappingEditFormModel"})`. HIGH/CRITICAL → STOP & lapor → risk LOW.
+- [x] `context7` query `github.com/charmbracelet/bubbles/textinput`, `github.com/charmbracelet/bubbles/list`, `github.com/charmbracelet/lipgloss`.
 
 ### Implementasi (scope minimal v1)
-- [ ] Section "Value Map" tampil **hanya** kalau dest column ENUM.
-- [ ] Editor pair `src → dest` (textinput / list custom). Add (`enter`), remove (`x`), tab pindah field.
-- [ ] Dropdown hint dest dari `Column.EnumValues(dest)`.
-- [ ] Save validasi (block kalau ada value bukan anggota `EnumValues`) → toast merah (konsisten bd-09d).
-- [ ] Save sukses → JSON canonical → `MappingRepo.Upsert` → toast hijau.
-- [ ] Esc dengan dirty → confirm discard (existing).
+- [x] Section "Value Map" tampil **hanya** kalau dest column ENUM.
+- [x] Editor pair `src → dest` (textinput + EnumValues list). Add (`enter`), remove (`x`), tab pindah field.
+- [x] Dropdown hint dest dari `Column.EnumValues(dest)`.
+- [x] Save validasi (block kalau value bukan anggota `EnumValues`) → error msg merah.
+- [x] Save sukses → JSON canonical → `BulkInsert` (existing pattern) → toast hijau.
+- [x] Esc dengan dirty → confirm discard (existing).
 
 ### Manual QA
 - [ ] Open ENUM column tanpa value_map → section kosong + info "passthrough".
-- [ ] Add pair `Draft → DRAFT`, `Ditampilkan → PUBLISHED` → save → reload → row punya indikator (mis. `[map]`).
-- [ ] Add pair invalid → save → toast merah, perubahan tidak persist.
+- [ ] Add pair `Draft → DRAFT`, `Ditampilkan → PUBLISHED` → save → reload → row punya indikator `[map]`.
+- [ ] Add pair invalid → save → error msg, perubahan tidak persist.
 - [ ] Edit existing → load terisi → ubah → save → DB ter-update.
 - [ ] Esc dirty → confirm.
 - [ ] Kolom non-ENUM → section TIDAK muncul.
 
 ### Close-out
 - [x] `gitnexus_detect_changes()` → attach di PR.
-- [x] PR #35 created & merged: https://github.com/kentoespdam/dbsync/pull/35
-- [x] PR merged.
-- [x] `bd close dbsync-gfd`.
-- [x] `git push && bd dolt push`.
+- [ ] PR merged.
+- [ ] `bd close dbsync-myy`.
+- [ ] `git push && bd dolt push`.
 
 ---
 

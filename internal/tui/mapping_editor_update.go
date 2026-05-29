@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/kentoespdam/dbsync/internal/storage"
 )
 
 func (m mappingEditorModel) Update(msg tea.Msg) (mappingEditorModel, tea.Cmd) {
@@ -141,6 +142,15 @@ func (m mappingEditorModel) save() tea.Msg {
 	}
 	if unresolved > 0 {
 		return fmt.Errorf("cannot save: %d NOT NULL columns unresolved", unresolved)
+	}
+
+	for _, mp := range m.mappings {
+		if mp.ValueMap.Valid {
+			dc := m.findDestCol(mp.DestColumn)
+			if err := storage.ValidateMapping(mp, dc); err != nil {
+				return fmt.Errorf("validate mapping %s: %v", mp.DestColumn, err)
+			}
+		}
 	}
 
 	ctx := context.Background()

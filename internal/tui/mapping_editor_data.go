@@ -102,6 +102,9 @@ func (m *mappingEditorModel) refreshTable() {
 		if mp.SourceColumn.Valid {
 			src = mp.SourceColumn.String
 		}
+		if mp.ValueMap.Valid {
+			src = src + " [map]"
+		}
 		def := "-"
 		if mp.DefaultValue.Valid {
 			def = mp.DefaultValue.String

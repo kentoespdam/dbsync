@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -38,6 +39,11 @@ func (d simpleDelegate) Render(w io.Writer, m list.Model, index int, listItem li
 	fmt.Fprint(w, style.Render(str))
 }
 
+type ValueMapPair struct {
+	Source      string
+	Destination string
+}
+
 type mappingEditFormModel struct {
 	mapping    storage.Mapping
 	destCol    mysql.Column
@@ -47,13 +53,20 @@ type mappingEditFormModel struct {
 	enumList   list.Model
 	input      textinput.Model
 
-	focused int // 0: sourceList, 1: defaultWidget
+	focused int // 0: sourceList, 1: defaultWidget, 2: valueMap
 	done    bool
 	canceled bool
 
-	isBool  bool
-	isEnum  bool
-	boolVal int // 0: empty, 1: true, 2: false
+	isBool     bool
+	isEnum     bool
+	boolVal    int // 0: empty, 1: true, 2: false
+	hasValueMap bool
+
+	valueMapPairs   []ValueMapPair
+	valueMapCursor  int
+	valueMapEditing int // 0: none, 1: source, 2: dest
+	valueMapInput   textinput.Model
+	valueMapDestHint []string
 
 	errorMsg string
 }
@@ -81,6 +94,7 @@ func newMappingEditFormModel(m storage.Mapping, destCol mysql.Column, sourceCols
 
 	form := mappingEditFormModel{mapping: m, destCol: destCol, sourceCols: sourceCols, sourceList: sl, focused: 0}
 	form.initDefaultWidget(m)
+	form.initValueMap(m, destCol)
 	return form
 }
 
@@ -113,6 +127,25 @@ func (m *mappingEditFormModel) initDefaultWidget(mrg storage.Mapping) {
 		ti.Placeholder = "Default value..."
 		if mrg.DefaultValue.Valid { ti.SetValue(mrg.DefaultValue.String) }
 		m.input = ti
+	}
+}
+
+func (m *mappingEditFormModel) initValueMap(mrg storage.Mapping, destCol mysql.Column) {
+	if enums := destCol.EnumValues(); len(enums) > 0 {
+		m.hasValueMap = true
+		m.valueMapDestHint = enums
+		m.valueMapInput = textinput.New()
+		m.valueMapInput.Placeholder = "Dest value..."
+		m.valueMapInput.Width = 20
+
+		if mrg.ValueMap.Valid {
+			var vmap map[string]string
+			if err := json.Unmarshal([]byte(mrg.ValueMap.String), &vmap); err == nil {
+				for src, dst := range vmap {
+					m.valueMapPairs = append(m.valueMapPairs, ValueMapPair{Source: src, Destination: dst})
+				}
+			}
+		}
 	}
 }
 
