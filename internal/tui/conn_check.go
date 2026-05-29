@@ -7,7 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/kentoespdam/dbsync/internal/crypto"
 	"github.com/kentoespdam/dbsync/internal/mysql"
-	"github.com/kentoespdam/dbsync/internal/redact"
+
 	"github.com/kentoespdam/dbsync/internal/storage"
 )
 
@@ -49,15 +49,15 @@ func (m connTestModel) testAll() tea.Msg {
 }
 
 // probe decrypts pw, opens a MySQL pool with cfg, and returns a user-visible
-// status string. Errors are redacted (quoted values stripped) before display.
+// status string. Errors are displayed apa adanya (password connection sudah di-redact di mysql/pool.go).
 func probe(encPw string, masterKey []byte, cfg mysql.Config) string {
 	pw, err := crypto.Decrypt(encPw, masterKey)
 	if err != nil {
-		return fmt.Sprintf("✗ Decryption failed: %s", redact.Error(err))
+		return fmt.Sprintf("✗ Decryption failed: %s", err)
 	}
 	cfg.Password = string(pw)
 	if _, err := mysql.Open(cfg); err != nil {
-		return fmt.Sprintf("✗ %s", redact.Error(err))
+		return fmt.Sprintf("✗ %s", err)
 	}
 	return "✓ OK"
 }

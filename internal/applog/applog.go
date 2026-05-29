@@ -15,7 +15,7 @@ import (
 
 // Init must be called once, paling awal di main().
 // Sets slog.Default to a text handler writing to <exeDir>/logs/dbsync.log
-// (rotated by lumberjack), with AddSource:true and redaction handler wrapping.
+// (rotated by lumberjack), with AddSource:true.
 // Returns an io.Closer to flush/close lumberjack on shutdown.
 func Init() (io.Closer, error) {
 	logDir, err := paths.LogsDir()
@@ -67,8 +67,7 @@ func initWithPath(path string) (io.Closer, error) {
 		},
 	}
 
-	baseHandler := slog.NewTextHandler(lj, opts)
-	handler := &redactHandler{baseHandler}
+	handler := slog.NewTextHandler(lj, opts)
 
 	slog.SetDefault(slog.New(handler))
 

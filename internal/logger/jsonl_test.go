@@ -10,30 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSanitizeError(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected string
-	}{
-		{
-			"Duplicate entry 'john@example.com' for key 'users.email'",
-			"Duplicate entry '[REDACTED]' for key '[REDACTED]'",
-		},
-		{
-			"near '...': syntax error",
-			"near '[REDACTED]': syntax error",
-		},
-		{
-			"normal error without quotes",
-			"normal error without quotes",
-		},
-	}
-
-	for _, tt := range tests {
-		assert.Equal(t, tt.expected, SanitizeError(errors.New(tt.input)))
-	}
-}
-
 func TestLogger(t *testing.T) {
 	l, err := New("testconn", "testtable")
 	assert.NoError(t, err)
@@ -53,7 +29,7 @@ func TestLogger(t *testing.T) {
 	err = json.Unmarshal([]byte(lines[0]), &e1)
 	assert.NoError(t, err)
 	assert.Equal(t, "row_error", e1.Level)
-	assert.Equal(t, "Duplicate entry '[REDACTED]'", e1.Error)
+	assert.Equal(t, "Duplicate entry 'val'", e1.Error)
 	assert.Equal(t, float64(101), e1.RowPK)
 
 	var e2 Entry

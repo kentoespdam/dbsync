@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/kentoespdam/dbsync/internal/paths"
-	"github.com/kentoespdam/dbsync/internal/redact"
 )
 
 // Logger writes structured log entries to a JSONL file.
@@ -66,7 +65,7 @@ func (l *Logger) RowError(batch int, pk any, err error, sqlTemplate string) {
 		Level:       "row_error",
 		Batch:       batch,
 		RowPK:       pk,
-		Error:       SanitizeError(err),
+		Error:       err.Error(),
 		SQLTemplate: sqlTemplate,
 	})
 }
@@ -76,7 +75,7 @@ func (l *Logger) BatchError(batch int, err error, sqlTemplate string) {
 	l.log(Entry{
 		Level:       "batch_error",
 		Batch:       batch,
-		Error:       SanitizeError(err),
+		Error:       err.Error(),
 		SQLTemplate: sqlTemplate,
 	})
 }
@@ -96,5 +95,4 @@ func (l *Logger) Close() error {
 	return l.file.Close()
 }
 
-// Deprecated: use redact.Error directly.
-func SanitizeError(err error) string { return redact.Error(err) }
+

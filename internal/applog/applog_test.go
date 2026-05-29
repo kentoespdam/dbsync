@@ -56,11 +56,8 @@ func TestInitWithPath(t *testing.T) {
 	if !strings.Contains(sContent, "test message") {
 		t.Error("log file does not contain test message")
 	}
-	if !strings.Contains(sContent, "[REDACTED]") {
-		t.Error("log file does not contain [REDACTED]")
-	}
-	if strings.Contains(sContent, "password") {
-		t.Error("log file contains sensitive data 'password'")
+	if !strings.Contains(sContent, "secret 'password'") {
+		t.Error("log file does not contain raw error")
 	}
 }
 
