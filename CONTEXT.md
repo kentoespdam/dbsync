@@ -38,7 +38,6 @@ internal/
 ├── engine/         sync orchestrator            ⟵ TBD
 ├── applog/         slog + lumberjack (app log)  ✅
 ├── logger/         JSONL log per-sync           ✅
-├── redact/         shared error redaction       ✅
 ├── paths/          binary-relative path helper  ✅
 ├── cli/            cobra handlers              ✅ skeleton
 └── tui/            bubbletea                    ⟵ TBD
@@ -58,13 +57,13 @@ Go 1.25 · bubbletea+bubbles+lipgloss · cobra · go-sql-driver/mysql · modernc
 ## Logging dua-jalur
 - **`applog`** (slog → `<exeDir>/logs/dbsync.log`, rotated via lumberjack) untuk debug & error review aplikasi sehari-hari. Format text/logfmt, `AddSource:true`, level via `DBSYNC_LOG_LEVEL`. File-only writer (TUI haram stdout).
 - **`logger`** (JSONL → `<exeDir>/logs/sync-<ts>-<conn>-<table>.jsonl`) tetap dipakai untuk error journal per-sync (row/batch error). Entry shape & filename **tidak berubah**; hanya direktori output yang pindah dari `~/.local/share/...` ke binary-relative.
-- Keduanya pakai **`redact`** package untuk strip nilai sensitif (quoted values) di pesan error.
+- Error MySQL ditulis apa adanya di kedua jalur agar actionable (lihat [ADR 0003](docs/adr/0003-remove-mysql-error-redaction.md)). Password connection MySQL tetap di-redact (`***`) di `internal/mysql/pool.go redactError`.
 
 ## Security (ringkas)
 - AES-256-GCM, nonce 12-byte random prepended.
 - scrypt KDF: N=32768, r=8, p=1, keyLen=32. Salt di `~/.config/dbsync/salt`.
 - Master password: TUI prompt 1x/session, RAM only. CLI dari `DBSYNC_MASTER_KEY` (64-char hex) → stdin → fail jelas.
-- Log redaction: SQL template di-log, argumen tidak. Password di error: `***`.
+- Log: SQL template di-log, argumen tidak. Password connection di error: `***` (lihat `internal/mysql/pool.go redactError`). Error MySQL lain (constraint violation, schema mismatch, dll) ditulis apa adanya untuk debuggability — lihat [ADR 0003](docs/adr/0003-remove-mysql-error-redaction.md).
 
 ## Workflow agent
 Pakai **bd (Beads)** untuk task tracking (bukan TodoWrite). Per issue:
@@ -97,7 +96,7 @@ Snapshot 2026-05-27: `bd-09` series completed. Issue 009 finalized.
 
 - **Test Connection** — dua jalur, semantik beda:
   1. *Form test* (`connFormModel.testSource/testDest` di `internal/tui/conn_form.go`) — validasi credential yang user **sedang ketik** di form, dipicu saat tekan Enter di field terakhir. Sukses → langsung lanjut save. Gagal → prompt "Save anyway? (y/N)". Tidak menampilkan layar hasil.
-  2. *List test* (`connTestModel.testAll` di `internal/tui/conn_check.go`) — re-test koneksi **yang sudah tersimpan**, password didekripsi dari SQLite. Dipicu dari list connection dengan tombol `t`. Tampilkan status `✓ OK` / `✗ <error>` untuk Source dan Dest, lalu tekan key apa pun untuk balik. Error yang ditampilkan **harus** melewati `redact.Error` (lihat Logging dua-jalur).
+  2. *List test* (`connTestModel.testAll` di `internal/tui/conn_check.go`) — re-test koneksi **yang sudah tersimpan**, password didekripsi dari SQLite. Dipicu dari list connection dengan tombol `t`. Tampilkan status `✓ OK` / `✗ <error>` untuk Source dan Dest, lalu tekan key apa pun untuk balik. Error MySQL ditampilkan apa adanya (password connection sudah di-redact di `mysql/pool.go`).
   > Aturan Bubble Tea: `tea.Cmd` jalan di goroutine — **jangan mutate model di Cmd**. Carry hasil di message payload, lalu `Update` yang menugaskan ke field model.
 
 ## Pointer
@@ -108,8 +107,9 @@ Snapshot 2026-05-27: `bd-09` series completed. Issue 009 finalized.
 | Urutan kerja | `docs/EXECUTION-ORDER.md` |
 | Detail issue | `docs/issues/00N-*.md` |
 | Distribusi & rilis | `docs/adr/0002-cross-platform-binary-distribution.md` |
+| Kenapa error MySQL tidak di-redact | `docs/adr/0003-remove-mysql-error-redaction.md` |
 | Aturan agent | `CLAUDE.md` |
 | GitHub mirror | https://github.com/kentoespdam/dbsync/issues |
 
-*Last updated: 2026-05-28.*
+*Last updated: 2026-05-29.*
 *

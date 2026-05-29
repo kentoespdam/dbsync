@@ -1,8 +1,10 @@
 # ADR 0001 — Application Logging Strategy
 
-**Status:** Accepted
+**Status:** Accepted (superseded in part by [ADR 0003](./0003-remove-mysql-error-redaction.md))
 **Date:** 2026-05-28
 **Decision drivers:** debug ergonomics dev & production, log dapat dipakai AI Agent untuk auto-perbaikan, cron-friendly, TUI tidak boleh nulis ke stdout.
+
+> **Note 2026-05-29:** Section "Decision" sub-3 (`internal/redact/`) dan komponen `redactHandler` di sub-1 di-supersede oleh ADR 0003. Error MySQL kini ditulis apa adanya. Password redaction di `internal/mysql/pool.go` tidak terpengaruh.
 
 ---
 
