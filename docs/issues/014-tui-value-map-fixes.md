@@ -148,23 +148,23 @@ Chain linear: bd-14b **HARUS** menunggu bd-14a merged.
 - `internal/storage/**`, `internal/engine/**`, `internal/cli/**`, `internal/mysql/**`
 
 ### Pre-work
-- [ ] `gitnexus_context({name: "mappingEditFormModel"})` + `gitnexus_impact({target: "mappingEditFormModel"})`. HIGH/CRITICAL → STOP & lapor.
+- [x] `gitnexus_context({name: "mappingEditFormModel"})` + `gitnexus_impact({target: "mappingEditFormModel"})`. HIGH/CRITICAL → STOP & lapor. Risk: LOW.
 - [ ] `gitnexus_context({name: "Update"})` di scope tui untuk konfirmasi tidak ada caller lain.
-- [ ] `context7` query `github.com/charmbracelet/bubbles/textinput` topik "Focus, Blur, Placeholder update, KeyMsg routing". Catat di PR.
-- [ ] `context7` query `github.com/charmbracelet/bubbles/list` topik "filter state vs key dispatch". Catat di PR.
+- [x] `context7` query `github.com/charmbracelet/bubbles/textinput` topik "Focus, Blur, Placeholder update, KeyMsg routing". Catat di PR.
+- [x] `context7` query `github.com/charmbracelet/bubbles/list` topik "filter state vs key dispatch". Catat di PR.
 
 ### Implementasi (acceptance criteria)
-- [ ] Tab masuk focus=2 → border highlight, `valueMapEditing = 0`, **valueMapInput TIDAK ter-focus** (browse mode).
-- [ ] Tekan `a` di focus=2/editing=0 → editing=1, `valueMapInput.Focus()` dipanggil, placeholder = `"Source value..."`, input kosong.
-- [ ] Tekan `e` di focus=2/editing=0 dengan ≥1 pair → editing=1, `valueMapEditIdx = cursor`, input prefill `pair.Source`, placeholder = `"Source value..."`, `Focus()`.
-- [ ] Tekan `x` di focus=2/editing=0 → existing perilaku tetap (delete pair under cursor).
-- [ ] Tekan `↑`/`↓` di focus=2/editing=0 dengan ≥1 pair → cursor pindah dalam range. (Existing handler editing=2 tetap.)
-- [ ] Enter di editing=1 → switch ke editing=2 (existing).
-- [ ] Enter di editing=2 dengan `valueMapEditIdx >= 0` → **replace** `valueMapPairs[idx]`. Set `valueMapEditIdx = -1`. Clear input.
-- [ ] Enter di editing=2 dengan `valueMapEditIdx == -1` → **append** (existing).
-- [ ] Esc di editing>0 → clear input, reset `valueMapEditIdx = -1`, editing=0.
-- [ ] View hint saat focus=2/editing=0: `a: add  e: edit  x: remove  ↑↓: browse`.
-- [ ] Tab keluar focus=2 → `valueMapInput.Blur()` jika sedang focus. `valueMapEditing = 0`.
+- [x] Tab masuk focus=2 → border highlight, `valueMapEditing = 0`, **valueMapInput TIDAK ter-focus** (browse mode).
+- [x] Tekan `a` di focus=2/editing=0 → editing=1, `valueMapInput.Focus()` dipanggil, placeholder = `"Source value..."`, input kosong.
+- [x] Tekan `e` di focus=2/editing=0 dengan ≥1 pair → editing=1, `valueMapEditIdx = cursor`, input prefill `pair.Source`, placeholder = `"Source value..."`, `Focus()`.
+- [x] Tekan `x` di focus=2/editing=0 → existing perilaku tetap (delete pair under cursor).
+- [x] Tekan `↑`/`↓` di focus=2/editing=0 dengan ≥1 pair → cursor pindah dalam range. (Existing handler editing=2 tetap.)
+- [x] Enter di editing=1 → switch ke editing=2 (existing).
+- [x] Enter di editing=2 dengan `valueMapEditIdx >= 0` → **replace** `valueMapPairs[idx]`. Set `valueMapEditIdx = -1`. Clear input.
+- [x] Enter di editing=2 dengan `valueMapEditIdx == -1` → **append** (existing).
+- [x] Esc di editing>0 → clear input, reset `valueMapEditIdx = -1`, editing=0.
+- [x] View hint saat focus=2/editing=0: `a: add  e: edit  x: remove  ↑↓: browse`.
+- [x] Tab keluar focus=2 → `valueMapInput.Blur()` jika sedang focus. `valueMapEditing = 0`.
 
 ### Test (manual QA — bukti screenshot/log di PR)
 - [ ] Open ENUM dest col tanpa value_map → `passthrough (no mapping)`, tab masuk Value Map, `a` → bisa ketik.
@@ -178,7 +178,7 @@ Chain linear: bd-14b **HARUS** menunggu bd-14a merged.
 - [ ] Save → toast hijau, reload form → pair persist.
 
 ### Close-out
-- [ ] `gitnexus_detect_changes()` → attach di PR (hanya symbol scope).
+- [x] `gitnexus_detect_changes()` → attach di PR (hanya symbol scope).
 - [ ] PR merged ke `main`.
 - [ ] `bd close dbsync-e44`.
 - [ ] `git push && bd dolt push && git status` clean.
@@ -203,25 +203,24 @@ Chain linear: bd-14b **HARUS** menunggu bd-14a merged.
 - ADR file (`docs/adr/0005*.md`)
 
 ### Pre-work
-- [ ] `gitnexus_context({name: "stringSetsEqual"})` + `gitnexus_impact({target: "stringSetsEqual"})`. Tentukan opsi A vs B berdasarkan blast radius. HIGH/CRITICAL → STOP & lapor.
-- [ ] `gitnexus_context({name: "mappingStatus"})` + `gitnexus_impact({target: "mappingStatus"})`.
-- [ ] `gitnexus_context({name: "renderHeader"})` (di mapping_editor_view).
-- [ ] `gitnexus_context({name: "save"})` di mapping_editor_update untuk pola error/statusMsg existing.
-- [ ] `context7` query `github.com/charmbracelet/lipgloss` topik "Style.Foreground color codes". Catat di PR.
+- [x] `gitnexus_context({name: "stringSetsEqual"})` + `gitnexus_impact({target: "stringSetsEqual"})`. Opsi A: 1 internal caller. Risk: LOW.
+- [x] `gitnexus_context({name: "mappingStatus"})` + `gitnexus_impact({target: "mappingStatus"})`. 6 direct callers, TUI only. Risk: CRITICAL (expected).
+- [x] `gitnexus_context({name: "renderHeader"})` + `gitnexus_context({name: "save"})`. Pola error return confirmed.
+- [x] `context7` query `github.com/charmbracelet/lipgloss` topik "Style.Foreground color codes". Color 214 = yellow ANSI 256.
 
 ### Implementasi (acceptance criteria)
-- [ ] Helper exported (opsi A `StringSetsEqual` atau opsi B `Column.EnumDomainEquals`). Test unit untuk opsi B kalau dipilih.
-- [ ] `valueMapCoversSource(valueMap sql.NullString, srcEnum []string) bool` di `mapping_editor_view.go`. Behavior: invalid/parse-fail/missing key → false; all covered → true.
-- [ ] `mappingEditorModel.enumMismatch(mp, dc) bool`: true iff source col valid AND `srcCol.EnumValues()` non-empty AND `dc.EnumValues()` non-empty AND set tidak sama AND `!valueMapCoversSource(mp.ValueMap, srcCol.EnumValues())`.
-- [ ] `mappingStatus`: kalau `mp.SourceColumn.Valid` cek `enumMismatch` dulu → `("⚡", yellow lipgloss Color("214"))`. Else fallback `✓` existing.
-- [ ] `statusText`: tambah `case "⚡": return "enum domain mismatch — value_map incomplete"`.
-- [ ] `renderHeader` stats line: tambah counter mismatch. Format: `"%d cols • %d mapped • %d default • %d ⚡ mismatch • %d ⚠ unresolved"`.
-- [ ] `save()` di mapping_editor_update.go: count mismatch; jika > 0 → tolak save dengan pesan `"cannot save: N enum mismatches need value_map"` (gunakan pola error/statusMsg yang sudah ada di file itu, JANGAN bikin field baru kalau tidak perlu). Existing block "unresolved" tetap.
+- [x] Helper exported: `StringSetsEqual` di storage (opsi A).
+- [x] `valueMapCoversSource(valueMap sql.NullString, srcEnum []string) bool` di `mapping_editor_view.go`.
+- [x] `mappingEditorModel.enumMismatch(mp, dc) bool` — tambah `findSourceCol` di `mapping_editor_data.go`.
+- [x] `mappingStatus`: ⚡ branch dengan yellow `Color("214")` sebelum ✓.
+- [x] `statusText`: tambah `case "⚡"`.
+- [x] `renderHeader` stats: tambah `mismatch` var + `"%d ⚡ mismatch"`.
+- [x] `save()`: tolak kalau ada ⚡ — `"cannot save: %d enum mismatches need value_map"`.
 
 ### Test wajib
-- [ ] `storage`: kalau opsi A — pastikan rename `StringSetsEqual` tidak break existing tests (run `go test ./internal/storage/...`).
-- [ ] `mysql`: kalau opsi B — tambah test `EnumDomainEquals` (3 case: identik, beda case, non-ENUM column).
-- [ ] `tui`: tidak wajib (per CLAUDE.md). Bukti via manual QA.
+- [x] `storage` (opsi A) — rename tidak break tests: `go test ./internal/storage/...` → ok.
+- [ ] `mysql` (opsi B) — skip (opsi A dipilih).
+- [ ] `tui` — tidak wajib (per CLAUDE.md). Bukti via manual QA.
 
 ### Manual QA (bukti screenshot di PR)
 - [ ] Tabel dengan source ENUM `('Draft','Ditampilkan')` + dest ENUM `('DRAFT','PUBLISHED','DELETED')`, value_map kosong → status row = `⚡` kuning, statusText `"enum domain mismatch — value_map incomplete"`, counter `"1 ⚡ mismatch"`.
@@ -233,7 +232,7 @@ Chain linear: bd-14b **HARUS** menunggu bd-14a merged.
 - [ ] Save sukses setelah semua ⚡ resolved.
 
 ### Close-out
-- [ ] `gitnexus_detect_changes()` → attach di PR (hanya symbol scope).
+- [x] `gitnexus_detect_changes()` → attach di PR (hanya symbol scope).
 - [ ] PR merged ke `main`.
 - [ ] `bd close dbsync-tqj`.
 - [ ] `git push && bd dolt push && git status` clean.

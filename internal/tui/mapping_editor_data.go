@@ -72,6 +72,15 @@ func (m *mappingEditorModel) findDestCol(name string) mysql.Column {
 	return mysql.Column{}
 }
 
+func (m *mappingEditorModel) findSourceCol(name string) mysql.Column {
+	for _, sc := range m.sourceCols {
+		if sc.Name == name {
+			return sc
+		}
+	}
+	return mysql.Column{}
+}
+
 func (m *mappingEditorModel) applyFilter() {
 	m.filteredMappings = nil
 	for _, mp := range m.mappings {

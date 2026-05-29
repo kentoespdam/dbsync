@@ -98,7 +98,7 @@ func AutoMap(connID int64, table string, sourceCols, destCols []mysql.Column) Au
 			srcVals := sc.EnumValues()
 			destVals := dc.EnumValues()
 			if len(srcVals) > 0 && len(destVals) > 0 {
-				if !stringSetsEqual(srcVals, destVals) {
+				if !StringSetsEqual(srcVals, destVals) {
 					suggested := generateSuggestedValueMap(srcVals, destVals)
 					res.EnumMismatches = append(res.EnumMismatches, EnumDomainMismatch{
 						DestColumn:   dc.Name,
@@ -113,7 +113,7 @@ func AutoMap(connID int64, table string, sourceCols, destCols []mysql.Column) Au
 	return res
 }
 
-func stringSetsEqual(a, b []string) bool {
+func StringSetsEqual(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
 	}

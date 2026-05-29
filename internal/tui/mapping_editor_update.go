@@ -144,6 +144,18 @@ func (m mappingEditorModel) save() tea.Msg {
 		return fmt.Errorf("cannot save: %d NOT NULL columns unresolved", unresolved)
 	}
 
+	mismatch := 0
+	for _, mp := range m.mappings {
+		dc := m.findDestCol(mp.DestColumn)
+		icon, _ := m.mappingStatus(mp, dc)
+		if icon == "⚡" {
+			mismatch++
+		}
+	}
+	if mismatch > 0 {
+		return fmt.Errorf("cannot save: %d enum mismatches need value_map", mismatch)
+	}
+
 	for _, mp := range m.mappings {
 		if mp.ValueMap.Valid {
 			dc := m.findDestCol(mp.DestColumn)
