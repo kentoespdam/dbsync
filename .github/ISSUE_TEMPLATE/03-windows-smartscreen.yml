@@ -1,0 +1,63 @@
+name: Windows SmartScreen Report
+title: "[SmartScreen] "
+description: Report a Windows Defender SmartScreen warning when running dbsync.exe
+labels: [windows, security, type::feedback]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. This helps decide whether to invest in code signing.
+
+        This issue is tracked by #23 (F5: Authenticode evaluation).
+
+  - type: input
+    id: dbsync-version
+    attributes:
+      label: dbsync version
+      description: Output of `dbsync version`
+      placeholder: e.g. v1.0.0
+    validations:
+      required: true
+
+  - type: input
+    id: windows-version
+    attributes:
+      label: Windows version
+      description: Run `winver` in Run dialog
+      placeholder: e.g. Windows 11 23H2
+    validations:
+      required: true
+
+  - type: textarea
+    id: warning-text
+    attributes:
+      label: SmartScreen warning
+      description: Paste the exact warning text or attach a screenshot
+      placeholder: '"Windows protected your PC" / "Unknown publisher" / etc.'
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Could you still run via "More info → Run anyway"?
+      placeholder: Yes / No (please explain)
+    validations:
+      required: true
+
+  - type: input
+    id: download-source
+    attributes:
+      label: Download source
+      description: Where did you get dbsync.exe?
+      placeholder: GitHub Releases / built from source / other
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: IT policy that blocks unsigned binaries? Corporate AV flagging it?
+      placeholder: N/A or describe
